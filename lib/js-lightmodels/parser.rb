@@ -41,19 +41,76 @@ def self.parse(code)
 end
 
 def self.tree_to_model(tree)
+	return node_to_model(tree.value[0]) if tree.value.count==1
 	node_to_model(tree)
+end
+
+# def self.properties_of(model)
+# 	usa ecore!!!
+# 	model.methods.select {|x| x.to_s.end_with?('=') and not([:==,:===,:<=,:>=,:!=].include?(x)) }
+# end
+
+def self.node_properties(node)
+	node.class.instance_methods(false)
+end
+
+def self.reference_to_method(ref)
+	s = ref.name
+	s = 'value' if s=='body'
+	s.to_sym
+end
+
+def self.assign_ref_to_model(model,ref,value)
+	if ref.many
+		adder_method = :"add#{ref.name.capitalize}"
+		value.each {|el| model.send(adder_method,node_to_model(el))}
+	else
+		setter_method = :"#{ref.name}="
+		value=value[0] if value.is_a?(Array)
+		model.send(setter_method,node_to_model(value))
+	end
 end
 
 def self.node_to_model(node)
 	class_name = node.class.simple_name.remove_postfix('Node')
 	if JsLightmodels.const_defined? class_name
-		node_class = JsLightmodels.const_get(class_name)
-		puts "Node #{node} -> #{node_class}"
-		model = node_class.new
+		model_class = JsLightmodels.const_get(class_name)
+		#puts "* model_class: #{model_class}"
+
+		model = model_class.new
+
+		model_class.ecore.eAllReferences.each do |ref|			
+			node_ref_value = node.send(reference_to_method(ref))
+			#puts "#{ref.name} = #{node_ref_value}"
+			assign_ref_to_model(model,ref,node_ref_value)
+		end
+
+		#puts "Node #{node} -> #{node_class}"
+
+
+		#puts "\tproperties of node: #{node_properties(node)}"
+
+
+
+		# try to get the stuff assignable:
+		#puts "Methods: #{properties_of(model)}"
+
+		# if node.value.is_a? Enumerable
+		# 	node.value.each do |child|
+		# 		node_to_model(child)
+		# 	end			
+		# else
+		# 	puts "Attr value in #{node.class}"
+		# end
+		
+		
 		model 
 	else
 		raise "Unknown node type: #{class_name}"
 	end
+rescue Exception => e
+	puts "parent is #{node.class}"
+	raise e
 end
 
 end
