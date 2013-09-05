@@ -54,9 +54,24 @@ def self.node_properties(node)
 	node.class.instance_methods(false)
 end
 
-def self.reference_to_method(ref)
+def self.adapter(model_class,ref)
+	if JsLightmodels::ParsingAdapters[model_class] && JsLightmodels::ParsingAdapters[model_class][ref.name]
+		JsLightmodels::ParsingAdapters[model_class][ref.name]
+	else
+		if model_class.superclass!=Object
+			adapter(model_class.superclass,ref) 
+		else
+			nil
+		end
+	end
+end
+
+def self.reference_to_method(model_class,ref)
 	s = ref.name
 	s = 'value' if s=='body'
+	#puts "CHECKING #{model_class} #{ref.name} #{JsLightmodels::ParsingAdapters[model_class]}"
+	adapted = adapter(model_class,ref)
+	s = adapted if adapted		
 	s.to_sym
 end
 
@@ -97,7 +112,7 @@ def self.node_to_model(node)
 		model = model_class.new
 
 		model_class.ecore.eAllReferences.each do |ref|			
-			node_ref_value = node.send(reference_to_method(ref))
+			node_ref_value = node.send(reference_to_method(model_class,ref))
 			#puts "#{ref.name} = #{node_ref_value}"
 			assign_ref_to_model(model,ref,node_ref_value)
 		end

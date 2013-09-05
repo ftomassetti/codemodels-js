@@ -4,6 +4,8 @@ module JsLightmodels
 
 # value is mapped to body, if the metaclass has it
 
+ParsingAdapters = Hash.new {|h,k| h[k]={}}
+
 class Statement < RGen::MetamodelBuilder::MMBase
 end
 
@@ -42,9 +44,11 @@ class AssignExpr < Expression
 end
 
 class BinaryExpression < Expression
-	contains_one_uni 'body', Expression
+	contains_one_uni 'right', Expression
 	contains_one_uni 'left', Expression
 end
+
+ParsingAdapters[BinaryExpression]['right'] = 'value'
 
 class Less < BinaryExpression
 end

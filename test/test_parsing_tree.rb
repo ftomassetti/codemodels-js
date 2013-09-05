@@ -37,8 +37,8 @@ class TestParsingTree < Test::Unit::TestCase
 		r = JsLightmodels.parse("i < 10;")
 		assert_class ExpressionStatement, r
 		assert_class Less, r.body
-		assert_class Number, r.body.body
-		assert_equal 10, r.body.body.value
+		assert_class Number, r.body.right
+		assert_equal 10, r.body.right.value
 		assert_class Resolve, r.body.left
 		assert_equal 'i', r.body.left.value
 	end
