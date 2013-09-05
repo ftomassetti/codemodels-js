@@ -26,37 +26,37 @@ class TestParsingTree < Test::Unit::TestCase
 	def test_var_statement
 		r = JsLightmodels.parse("var i = 0;")
 		assert_class VarStatement, r
-		assert_class VarDecl, r.body
-		assert_equal 'i', r.body.name
-		assert_class AssignExpr, r.body.body
-		assert_class Number, r.body.body.body
-		assert_equal 0, r.body.body.body.value
+		assert_class VarDecl, r.decl
+		assert_equal 'i', r.decl.name
+		assert_class AssignExpr, r.decl.value
+		assert_class Number, r.decl.value.value
+		assert_equal 0, r.decl.value.value.value
 	end
 
 	def test_less
 		r = JsLightmodels.parse("i < 10;")
 		assert_class ExpressionStatement, r
-		assert_class Less, r.body
-		assert_class Number, r.body.right
-		assert_equal 10, r.body.right.value
-		assert_class Resolve, r.body.left
-		assert_equal 'i', r.body.left.value
+		assert_class Less, r.expression
+		assert_class Number, r.expression.right
+		assert_equal 10, r.expression.right.value
+		assert_class Resolve, r.expression.left
+		assert_equal 'i', r.expression.left.id
 	end
 
 	def test_postfix
 		r = JsLightmodels.parse("i++;")
 		assert_class ExpressionStatement, r
-		assert_class Postfix, r.body
-		assert_class Resolve, r.body.operand
-		assert_equal "++", r.body.value
+		assert_class Postfix, r.expression
+		assert_class Resolve, r.expression.operand
+		assert_equal "++", r.expression.operator
 	end
 
 	def test_block
 		r = JsLightmodels.parse("{ var x = 5 + 5; }")
 		assert_class Block, r
 		assert_class SourceElements, r.body
-		assert_equal 1, r.body.body.count
-		assert_class VarStatement,r.body.body[0]
+		assert_equal 1, r.body.contents.count
+		assert_class VarStatement,r.body.contents[0]
 	end
 
 end

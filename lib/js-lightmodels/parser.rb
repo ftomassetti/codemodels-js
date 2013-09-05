@@ -68,15 +68,17 @@ end
 
 def self.reference_to_method(model_class,ref)
 	s = ref.name
-	s = 'value' if s=='body'
-	#puts "CHECKING #{model_class} #{ref.name} #{JsLightmodels::ParsingAdapters[model_class]}"
+	#s = 'value' if s=='body'
 	adapted = adapter(model_class,ref)
 	s = adapted if adapted		
 	s.to_sym
 end
 
-def self.attribute_to_method(att)
-	att.name.to_sym
+def self.attribute_to_method(model_class,att)
+	s = att.name
+	adapted = adapter(model_class,att)
+	s = adapted if adapted		
+	s.to_sym
 end
 
 def self.assign_ref_to_model(model,ref,value)
@@ -118,7 +120,7 @@ def self.node_to_model(node)
 		end
 
 		model_class.ecore.eAllAttributes.each do |att|			
-			node_att_value = node.send(attribute_to_method(att))
+			node_att_value = node.send(attribute_to_method(model_class,att))
 			#puts "#{ref.name} = #{node_ref_value}"
 			assign_att_to_model(model,att,node_att_value)
 		end
