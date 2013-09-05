@@ -29,6 +29,7 @@ class For < Statement
 end
 
 class Block < Statement
+	contains_one_uni 'body', SourceElements
 end
 
 class VarDecl < Statement
@@ -56,7 +57,7 @@ class Number < Literal
 	has_attr 'value', Integer
 end
 
-class Add < Statement
+class Add < Expression
 end
 
 class VarStatement < Statement

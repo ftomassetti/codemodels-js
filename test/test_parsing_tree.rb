@@ -51,4 +51,12 @@ class TestParsingTree < Test::Unit::TestCase
 		assert_equal "++", r.body.value
 	end
 
+	def test_block
+		r = JsLightmodels.parse("{ var x = 5 + 5; }")
+		assert_class Block, r
+		assert_class SourceElements, r.body
+		assert_equal 1, r.body.body.count
+		assert_class VarStatement,r.body.body[0]
+	end
+
 end
