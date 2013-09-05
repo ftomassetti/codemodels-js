@@ -43,4 +43,12 @@ class TestParsingTree < Test::Unit::TestCase
 		assert_equal 'i', r.body.left.value
 	end
 
+	def test_postfix
+		r = JsLightmodels.parse("i++;")
+		assert_class ExpressionStatement, r
+		assert_class Postfix, r.body
+		assert_class Resolve, r.body.operand
+		assert_equal "++", r.body.value
+	end
+
 end

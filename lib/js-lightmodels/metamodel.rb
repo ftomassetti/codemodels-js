@@ -7,7 +7,7 @@ module JsLightmodels
 class Statement < RGen::MetamodelBuilder::MMBase
 end
 
-class Expression < RGen::MetamodelBuilder::MMBase
+class Expression < Statement
 end
 
 class ExpressionStatement < Statement
@@ -63,7 +63,9 @@ class VarStatement < Statement
 	contains_one_uni 'body', VarDecl
 end
 
-class Postfix < Statement
+class Postfix < Expression
+	has_attr 'value', String
+	contains_one_uni 'operand', Expression
 end
 
 end
