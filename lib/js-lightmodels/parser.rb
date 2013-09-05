@@ -60,6 +60,10 @@ def self.reference_to_method(ref)
 	s.to_sym
 end
 
+def self.attribute_to_method(att)
+	att.name.to_sym
+end
+
 def self.assign_ref_to_model(model,ref,value)
 	if ref.many
 		adder_method = :"add#{ref.name.capitalize}"
@@ -71,7 +75,20 @@ def self.assign_ref_to_model(model,ref,value)
 	end
 end
 
+def self.assign_att_to_model(model,att,value)
+	if att.many
+		adder_method = :"add#{att.name.capitalize}"
+		value.each {|el| model.send(adder_method,node_to_model(el))}
+	else
+		setter_method = :"#{att.name}="
+		value=value[0] if value.is_a?(Array)
+		model.send(setter_method,node_to_model(value))
+	end
+end
+
 def self.node_to_model(node)
+	return node if node.is_a?(String)
+	return node if node.is_a?(Fixnum)
 	class_name = node.class.simple_name.remove_postfix('Node')
 	if JsLightmodels.const_defined? class_name
 		model_class = JsLightmodels.const_get(class_name)
@@ -85,24 +102,11 @@ def self.node_to_model(node)
 			assign_ref_to_model(model,ref,node_ref_value)
 		end
 
-		#puts "Node #{node} -> #{node_class}"
-
-
-		#puts "\tproperties of node: #{node_properties(node)}"
-
-
-
-		# try to get the stuff assignable:
-		#puts "Methods: #{properties_of(model)}"
-
-		# if node.value.is_a? Enumerable
-		# 	node.value.each do |child|
-		# 		node_to_model(child)
-		# 	end			
-		# else
-		# 	puts "Attr value in #{node.class}"
-		# end
-		
+		model_class.ecore.eAllAttributes.each do |att|			
+			node_att_value = node.send(attribute_to_method(att))
+			#puts "#{ref.name} = #{node_ref_value}"
+			assign_att_to_model(model,att,node_att_value)
+		end
 		
 		model 
 	else

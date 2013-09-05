@@ -26,6 +26,21 @@ class TestParsingTree < Test::Unit::TestCase
 	def test_var_statement
 		r = JsLightmodels.parse("var i = 0;")
 		assert_class VarStatement, r
+		assert_class VarDecl, r.body
+		assert_equal 'i', r.body.name
+		assert_class AssignExpr, r.body.body
+		assert_class Number, r.body.body.body
+		assert_equal 0, r.body.body.body.value
+	end
+
+	def test_less
+		r = JsLightmodels.parse("i < 10;")
+		assert_class ExpressionStatement, r
+		assert_class Less, r.body
+		assert_class Number, r.body.body
+		assert_equal 10, r.body.body.value
+		assert_class Resolve, r.body.left
+		assert_equal 'i', r.body.left.value
 	end
 
 end

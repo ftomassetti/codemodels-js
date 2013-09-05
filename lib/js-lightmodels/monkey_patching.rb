@@ -7,7 +7,7 @@ end
 
 class String
 	def remove_postfix(postfix)
-		raise "I have not the right prefix" unless end_with?(postfix)
+		raise "#{self} have not the right prefix" unless end_with?(postfix)
 		self[0..-(1+postfix.length)]
 	end
 end

@@ -7,7 +7,14 @@ module JsLightmodels
 class Statement < RGen::MetamodelBuilder::MMBase
 end
 
-class Literal < RGen::MetamodelBuilder::MMBase
+class Expression < RGen::MetamodelBuilder::MMBase
+end
+
+class ExpressionStatement < Statement
+	contains_one_uni 'body', Expression
+end
+
+class Literal < Expression
 end
 
 class SourceElements < RGen::MetamodelBuilder::MMBase
@@ -17,7 +24,7 @@ end
 class For < Statement	
 	contains_one_uni 'init', Statement
 	contains_one_uni 'counter', Statement
-	contains_one_uni 'test', Statement
+	contains_one_uni 'test', Expression
 	contains_one_uni 'body', Statement
 end
 
@@ -25,18 +32,28 @@ class Block < Statement
 end
 
 class VarDecl < Statement
+	has_attr 'name', String
+	contains_one_uni 'body', Expression
 end
 
-class AssignExpr < Statement
+class AssignExpr < Expression
+	contains_one_uni 'body', Expression
 end
 
-class Less < Statement
+class BinaryExpression < Expression
+	contains_one_uni 'body', Expression
+	contains_one_uni 'left', Expression
 end
 
-class Resolve < Statement
+class Less < BinaryExpression
+end
+
+class Resolve < Expression
+	has_attr 'value', String
 end
 
 class Number < Literal
+	has_attr 'value', Integer
 end
 
 class Add < Statement
