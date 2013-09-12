@@ -84,15 +84,19 @@ module Js
 		end
 	end
 
+	def self.rhino_node_class(name)
+		java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.ast.#{name}")
+	end
+
+	def self.metasuperclass(java_super_class)
+	end
+
 	def self.wrap(ast_names)		
 		# first create all the classes
 		ast_names.each do |ast_name|
-			if ast_name=='Node'
-				java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.#{ast_name}")
-			else
-				java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.ast.#{ast_name}")
-			end
+			java_class       = rhino_node_class(ast_name)
 			java_super_class = java_class.superclass
+			#super_class      = get_metaclass_by_name(java_super_class.name)
 			if java_super_class.name == 'org.mozilla.javascript.ast.AstNode'
 				super_class = RGen::MetamodelBuilder::MMBase
 			elsif java_super_class.name == 'java.lang.Object'
