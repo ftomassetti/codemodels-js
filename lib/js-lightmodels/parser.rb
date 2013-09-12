@@ -1,4 +1,3 @@
-require 'rkelly'
 require 'js-lightmodels/metamodel'
 
 module LightModels
@@ -11,8 +10,7 @@ end
 
 def self.parse_file(path)
 	content = IO.read(path)
-	#puts "content size: #{content.length}"
-	self.parse_code(content)
+	self.parse_code(content,path)
 end
 
 class ParsingError < Exception
@@ -37,50 +35,20 @@ class UnknownNodeType < ParsingError
 
 end
 
-class RKellyLogger 
+def self.parse_code(code,filename='<code>')
+	java_import 'java.io.StringReader'
+	java_import 'org.mozilla.javascript.CompilerEnvirons'
+	java_import 'org.mozilla.javascript.Parser'
+	env = CompilerEnvirons.new
+	parser = Parser.new(env)
+	reader = StringReader.new(code)
 
-	attr_accessor :errors, :debug_msgs
-
-	def initialize
-		@errors = []
-		@debug_msgs = []
-	end
-
-	def error(msg)
-		@errors << msg
-	end
-
-	def debug(msg)
-		@debug_msgs << msg
-	end
-
-end
-
-def self.parse_code(code)
-	parser = RKelly::Parser.new
-	logger = RKellyLogger.new
-	parser.logger = logger
-
-	tree = parser.parse(code)
-	if logger.errors.count > 0
-		raise "Parsing Errors: #{logger.errors}. Debug msgs: #{logger.debug_msgs}"
-	end
-	#puts "Tree: #{tree.class}"
+	tree = parser.parse(reader, filename, 1)
 	tree_to_model(tree)
 end
 
 def self.tree_to_model(tree)
-	return node_to_model(tree.value[0]) if tree.value.count==1
 	node_to_model(tree)
-end
-
-# def self.properties_of(model)
-# 	usa ecore!!!
-# 	model.methods.select {|x| x.to_s.end_with?('=') and not([:==,:===,:<=,:>=,:!=].include?(x)) }
-# end
-
-def self.node_properties(node)
-	node.class.instance_methods(false)
 end
 
 def self.adapter(model_class,ref)
@@ -139,59 +107,63 @@ def self.assign_att_to_model(model,att,value)
 	end
 end
 
+def self.get_value(node,name)
+	capitalized_name = name.capitalize[0]+name[1..-1]
+	methods = [:"get#{capitalized_name}",:"is#{capitalized_name}"]
+
+	methods.each do |m|
+		if node.respond_to?(m)
+			begin
+				return node.send(m)
+			rescue Object => e
+				raise "Problem invoking #{m} on #{node.class}: #{e}"
+			end
+		end
+	end
+	raise "how should I get this... #{name} on #{node.class}. It does not respond to #{methods}"
+end
+
+def self.populate_attr(node,att,model)	
+	value = get_value(node,att.name)
+	model.send(:"#{att.name}=",value) if value
+	#puts " * populate att #{att.name}"
+end
+
+def self.populate_ref(node,ref,model)
+	value = get_value(node,ref.name)
+	if value
+		if value==node
+			puts "avoiding loop... #{ref.name}, class #{node.class}" 
+			return
+		end
+		#puts "\tvalue #{value.class}"
+		if value.is_a?(Java::JavaUtil::Collection)
+			capitalized_name = ref.name.capitalize[0]+ref.name[1..-1]	
+			#puts "Methods of #{model.class}: #{model.methods}"
+			value.each do |el|
+				#puts "\t\tassigning el #{el.class}"
+				model.send(:"add#{capitalized_name}",node_to_model(el))
+			end
+		else
+			#puts "\t\tassigning #{value.class}"
+			model.send(:"#{ref.name}=",node_to_model(value))
+		end
+	end
+#rescue Object => e
+#	puts "Problem while populating ref #{ref.name} of #{node.class}: #{e}"
+end
+
 def self.node_to_model(node)
-	if node.is_a?(String)
-		l = StringLiteral.new
-		l.value = node
-		return l
+	metaclass = get_corresponding_metaclass(node.class)
+	instance = metaclass.new
+	metaclass.ecore.eAllAttributes.each do |attr|
+		populate_attr(node,attr,instance)
 	end
-	return node if node.is_a?(Fixnum)
-	raise "Wrong node: #{node.class}" unless node.is_a? RKelly::Nodes::Node
-	if node.class.simple_name == 'StringNode'
-		class_name = 'StringLiteral'
-	elsif node.class.simple_name == 'IfNode'
-		class_name = 'IfStatement'		
-	elsif node.class.simple_name.end_with?('Node')
-		class_name = node.class.simple_name.remove_postfix('Node')
-	else
- 		class_name = node.class.simple_name
+	metaclass.ecore.eAllReferences.each do |ref|
+		#puts "Populating ref #{ref.name}"
+		populate_ref(node,ref,instance)
 	end
-	if LightModels::Js.const_defined? class_name
-		model_class = LightModels::Js.const_get(class_name)
-		#puts "* model_class: #{model_class}"
-
-		model = model_class.new
-
-		model_class.ecore.eAllReferences.each do |ref|		
-			method = reference_to_method(model_class,ref)	
-			raise "Node #{node} (#{node.class}) do not have property '#{ref.name}'. It was mapped to #{model_class}" unless node.respond_to?(method)
-			node_ref_value = node.send(method)
-			#puts "#{ref.name} = #{node_ref_value}"
-			assign_ref_to_model(model,ref,node_ref_value)
-		end
-
-		model_class.ecore.eAllAttributes.each do |att|			
-			method = attribute_to_method(model_class,att)
-			unless node.respond_to?(method)
-				method_boolean = :"#{method}?"
-				if node.respond_to?(method_boolean)
-					method = method_boolean
-				else
-					raise "Node #{node} (#{node.class}) do not have attributey '#{att.name}'. It was mapped to #{model_class}" unless node.respond_to?(method)
-				end
-			end			
-			node_att_value = node.send(method)
-			#puts "#{ref.name} = #{node_ref_value}"
-			assign_att_to_model(model,att,node_att_value)
-		end
-		
-		model 
-	else
-		raise "Unknown node type: #{class_name}"
-	end
-rescue Exception => e
-	puts "parent is #{node.class}"
-	raise e
+	instance
 end
 
 end

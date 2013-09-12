@@ -1,322 +1,201 @@
 require 'rgen/metamodel_builder'
 
+class String
+	def remove_postfix(postfix)
+		raise "'#{self}'' have not the right postfix '#{postfix}'" unless end_with?(postfix)
+		self[0..-(1+postfix.length)]
+	end
+
+	def remove_prefix(prefix)
+		raise "'#{self}'' have not the right prefix '#{prefix}'" unless start_with?(prefix)
+		self[prefix.length..-1]
+	end
+
+	def uncapitalize 
+    	self[0, 1].downcase + self[1..-1]
+  	end
+end	
+
 module LightModels
 
 module Js
 
-# value is mapped to body, if the metaclass has it
+	JavaString  = ::Java::JavaClass.for_name("java.lang.String")
+	JavaList    = ::Java::JavaClass.for_name("java.util.List")
+	JavaBoolean = ::Java::boolean.java_class
+	JavaInt = ::Java::int.java_class
+	JavaDouble = ::Java::double.java_class
+	JavaArray = ::Java::int.java_class
 
-ParsingAdapters = Hash.new {|h,k| h[k]={}}
+	MappedAstClasses = {}
 
-class Statement < RGen::MetamodelBuilder::MMBase
-end
+	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
+		#puts "type_name: #{type_name}"
+		last = type_name.index '>'
+		type_name = type_name[0..last-1] if last
+		type_ast_class = MappedAstClasses.keys.find{|k| k.name==type_name}
+		rgen_class = MappedAstClasses[type_ast_class]
+		if type_name=='org.mozilla.javascript.Node' or type_name=='org.mozilla.javascript.ast.AstNode'
+			rgen_class = RGen::MetamodelBuilder::MMBase
+		end
+		if rgen_class
+			c.class_eval do
+				contains_many_uni prop_name, rgen_class
+			end
+		else
+			if type_name==JavaString.name
+				c.class_eval { has_many_attr prop_name, String }
+			elsif type_name==JavaBoolean.name
+				c.class_eval { has_many_attr prop_name, RGen::MetamodelBuilder::DataTypes::Boolean }
+			elsif type_name==JavaInt.name
+				c.class_eval { has_many_attr prop_name, Integer }
+			else
+				raise "#{ast_name}) Property (many) #{prop_name} is else: #{type_name}"
+			end
+		end
+	end
 
-class Expression < Statement
-end
+	def self.wrap(ast_names)		
 
-# ok
-class SourceElements < Expression
-	contains_many_uni 'contents', Statement
-	ParsingAdapters[self]['contents'] = 'value'
-end
+		# first create all the classes
+		ast_names.each do |ast_name|
+			if ast_name=='Node'
+				java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.#{ast_name}")
+			else
+				java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.ast.#{ast_name}")
+			end
+			java_super_class = java_class.superclass
+			if java_super_class.name == 'org.mozilla.javascript.ast.AstNode'
+				super_class = RGen::MetamodelBuilder::MMBase
+			elsif java_super_class.name == 'java.lang.Object'
+				super_class = RGen::MetamodelBuilder::MMBase
+			else
+				raise "Super class #{java_super_class.name} of #{java_class.name}. It should be wrapped before!" unless MappedAstClasses[java_super_class]
+				super_class = MappedAstClasses[java_super_class]
+			end
+			#puts "Java Super Class: #{java_super_class.name}"
+			ast_class = java_class.ruby_class
+			#puts "Class #{simple_java_class_name(ast_class)} extends #{super_class}"
+			c = Class.new(super_class)
+			raise "Already mapped! #{ast_name}" if MappedAstClasses[java_class]
+			MappedAstClasses[java_class] = c
+			Js.const_set simple_java_class_name(ast_class), c
+		end
 
-# ok
-class ExpressionStatement < Statement
-	contains_one_uni 'expression', Expression
-	ParsingAdapters[self]['expression'] = 'value'
-end
+		# then add all the properties and attributes
+		ast_names.each do |ast_name|
+			java_class = ::Java::JavaClass.for_name("org.mozilla.javascript.ast.#{ast_name}")
+			ast_class = java_class.ruby_class
+			c = MappedAstClasses[java_class]
+				
+			to_ignore = %w( symbolTable compilerData comments liveLocals regexpString
+				regexpFlags indexForNameNode paramAndVarCount paramAndVarNames
+				paramAndVarConst jumpStatement finally loop default continue
+				containingTable definingScope parentScope top quoteCharacter
+				sourceName inStrictMode encodedSourceStart encodedSourceEnd
+				baseLineno endLineno functionCount regexpCount paramCount nextTempName
+				functions symbols childScopes encodedSource statement var const let
+				destructuring localName scope number operatorPosition
+			 )
 
-# checked
-class NewExpr < Expression
-	contains_one_uni 'type', Expression
-	contains_one_uni 'arguments', Expression
-	ParsingAdapters[self]['type'] = 'value'
-end
+			c.class_eval do
+				ast_class.java_class.declared_instance_methods.select do |m| 
+					(m.name.start_with?('get')||m.name.start_with?('is')) and m.argument_types.count==0					
+				end.each do |m|
 
-class Literal < Expression
-end
+					prop_name = LightModels::Js.property_name(m)
+					if to_ignore.include?(prop_name)
+					#	puts "Skipping #{prop_name}"
+					elsif m.return_type==JavaString
+						has_attr prop_name, String
+					elsif m.return_type==JavaBoolean
+						has_attr prop_name, RGen::MetamodelBuilder::DataTypes::Boolean
+					elsif m.return_type==JavaInt
+						has_attr prop_name, Integer
+					elsif m.return_type==JavaDouble
+						has_attr prop_name, Float						
+					elsif MappedAstClasses.has_key?(m.return_type)
+						contains_one_uni prop_name, MappedAstClasses[m.return_type]
+					elsif m.return_type==JavaList
+	#					puts "Property #{prop_name} is a list"
+						type_name = LightModels::Js.get_generic_param(m.to_generic_string)
+						LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
+					elsif m.return_type.array?
+						LightModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
+					elsif m.return_type.enum?
+						has_attr prop_name, String
+					elsif m.return_type.name=='org.mozilla.javascript.Node' or m.return_type.name=='org.mozilla.javascript.ast.AstNode'
+						contains_one_uni prop_name, RGen::MetamodelBuilder::MMBase					
+					else
+						raise "#{ast_name}) Property (single) '#{prop_name}' is else: #{m.return_type}"
+					end
+					#type = nil
+					#contains_one_uni prop_name, type
+				end
+			end
+		end
+	end
 
-# checked
-class FunctionExpr < Expression
-	has_attr 'name', String
-	contains_one_uni 'function_body', Statement
-	contains_many_uni 'arguments', Expression
-	ParsingAdapters[self]['name'] = 'value'
-end
+	def self.get_corresponding_metaclass(node_class)
+		name = simple_java_class_name(node_class)
+		return Js.const_get(name)
+	end
 
-# checked
-class FunctionDecl < FunctionExpr
-end
+	private
 
-# checked
-class FunctionCall < Expression
-	contains_one_uni 'function', Statement
-	contains_many_uni 'arguments', Statement
-	ParsingAdapters[self]['function'] = 'value'
-end
+	def self.property_name(java_method)
+		return java_method.name.remove_prefix('get').uncapitalize if java_method.name.start_with?('get')
+		return java_method.name.remove_prefix('is').uncapitalize if java_method.name.start_with?('is')
+	end
 
-# checked
-class For < Statement	
-	contains_one_uni 'init', Statement
-	contains_one_uni 'counter', Statement
-	contains_one_uni 'test', Expression
-	contains_one_uni 'body', Statement
-	ParsingAdapters[self]['body'] = 'value'
-end
+	def self.simple_java_class_name(java_class)
+		name = java_class.name
+    	if (i = (r = name).rindex(':')) then r[0..i] = '' end
+    	r
+  	end
 
-# checked
-class ForIn < Statement	
-	contains_one_uni 'left', Expression
-	contains_one_uni 'right', Expression
-	contains_one_uni 'body', Statement
-	ParsingAdapters[self]['body'] = 'value'
-end
+  	def self.get_generic_param(generic_str)
+  		return generic_str.remove_prefix('public java.util.List<') if generic_str.start_with?('public java.util.List<')
+  		return generic_str.remove_prefix('public final java.util.List<') if generic_str.start_with?('public final java.util.List<')
+  		nil
+  	end
 
-# checked
-class VarDecl < Statement
-	has_attr 'name', String
-	has_attr 'constant', Boolean
-	contains_one_uni 'value', Expression
-end
+  	def self.declared_methods(java_class)
 
-# checked
-class Label < Statement
-	has_attr 'name', String
-	contains_one_uni 'body', Statement
-	ParsingAdapters[self]['body'] = 'value'
-end
+  	end
 
-# checked
-class IfStatement < Statement
-	contains_one_uni 'test', Expression
-	contains_one_uni 'then_block', Statement
-	contains_one_uni 'else_block', Statement
-	ParsingAdapters[self]['test'] = 'conditions'
-	ParsingAdapters[self]['then_block'] = 'value'
-	ParsingAdapters[self]['else_block'] = 'else'
-end
-
-# checked
-class Conditional < IfStatement
-end
-
-# checked
-class Comma < Expression
-	contains_one_uni 'right', Expression
-	contains_one_uni 'left', Expression
-	ParsingAdapters[self]['right'] = 'value'
-end
-
-# checked
-class BracketAccessor < Expression
-	contains_one_uni 'resolve', Expression
-	contains_one_uni 'accessor', Expression
-	ParsingAdapters[self]['resolve'] = 'value'	
-end
-
-# checked
-class DotAccessor < Expression
-	contains_one_uni 'resolve', Expression
-	contains_one_uni 'accessor', Expression
-	ParsingAdapters[self]['resolve'] = 'value'	
-end
-
-# checked
-class Try < Statement
-	contains_one_uni 'body', Statement
-	contains_one_uni 'catch_var', Expression
-	contains_one_uni 'catch_block', Statement
-	contains_one_uni 'finally_block', Statement
-	ParsingAdapters[self]['body'] = 'value'	
-end
-
-# checked
-class BinaryExpression < Expression
-	contains_one_uni 'right', Expression
-	contains_one_uni 'left', Expression
-	ParsingAdapters[self]['right'] = 'value'
-end
-
-# checked
-%w[Subtract LessOrEqual GreaterOrEqual Add Multiply NotEqual
-       LogicalAnd UnsignedRightShift Modulus
-       NotStrictEqual Less With In Greater BitOr StrictEqual LogicalOr
-       BitXOr LeftShift Equal BitAnd InstanceOf Divide RightShift].each do |node|
-    const_set "#{node}", Class.new(BinaryExpression)
-end
-
-class CaseBlock < Statement
-	contains_many_uni 'values', Expression
-	ParsingAdapters[self]['values'] = 'value'
-end
-
-class Switch < Statement
-	contains_one_uni 'cases', CaseBlock
-	contains_one_uni 'condition', Expression
-	ParsingAdapters[self]['condition'] = 'left'
-	ParsingAdapters[self]['cases'] = 'value'	
-end
-
-class While < Statement
-	contains_one_uni 'body', Statement
-	contains_one_uni 'condition', Expression
-	ParsingAdapters[self]['condition'] = 'left'
-	ParsingAdapters[self]['body'] = 'value'
-end
-
-class DoWhile < Statement
-	#problem with this node?
-	contains_one_uni 'body', Statement
-	contains_one_uni 'condition', Expression
-	ParsingAdapters[self]['condition'] = 'left'
-	ParsingAdapters[self]['body'] = 'value'
-end
-
-# checked
-class OpEqual < Expression
-	contains_one_uni 'right', Expression
-	contains_one_uni 'left', Expression
-	ParsingAdapters[self]['right'] = 'value'	
-end
-
-%w[Multiply Divide LShift Minus Plus Mod XOr RShift And URShift Or].each do |node|
-    const_set "Op#{node}Equal", Class.new(OpEqual)
-end
-
-# checked
-class CaseClause < BinaryExpression
-end
-
-# checked
-class Resolve < Expression
-	has_attr 'id', String
-	ParsingAdapters[self]['id'] = 'value'
-end
-
-# checked
-class Property < Expression
-	has_attr 'name', String
-	contains_one_uni 'body', Statement
-	ParsingAdapters[self]['body'] = 'value'	
-end
-
-# checked
-class Postfix < Expression
-	has_attr 'operator', String
-	contains_one_uni 'operand', Expression
-	ParsingAdapters[self]['operator'] = 'value'
-end
-
-# checked
-class Prefix < Expression
-	has_attr 'operator', String
-	contains_one_uni 'operand', Expression
-	ParsingAdapters[self]['operator'] = 'value'
-end
-
-class ValuedStatement < Statement
-	contains_one_uni 'value', Expression
-end
-
-%w[Delete Return
-       Throw
-       Break
-       Attr Continue ConstStatement].each do |node|
-      const_set "#{node}", Class.new(ValuedStatement)
-end
-
-class UnaryMinus < Expression
-	contains_one_uni 'value', Expression
-end
-
-class UnaryPlus < Expression
-	contains_one_uni 'value', Expression
-end
-
-class TypeOf < Expression
-	contains_one_uni 'value', Expression
-end
-
-class LogicalNot < Expression
-	contains_one_uni 'value', Expression
-end
-
-class BitwiseNot < Expression
-	contains_one_uni 'value', Expression
-end
-
-class FunctionBody < Expression
-	contains_one_uni 'value', Expression
-end
-
-class Parameter < Expression
-	contains_one_uni 'value', Expression
-end
-
-class Element < Expression
-	contains_one_uni 'value', Expression
-end
-
-class Arguments < Expression
-	contains_many_uni 'values', Statement
-	ParsingAdapters[self]['values'] = 'value'
-end
-
-# ok
-class Block < Statement
-	contains_one_uni 'body', SourceElements
-	ParsingAdapters[self]['body'] = 'value'
-end
-
-# ok
-class AssignExpr < Expression
-	contains_one_uni 'value', Expression
-end
-
-# ok
-class VarStatement < Statement
-	contains_many_uni 'decl', VarDecl
-	ParsingAdapters[self]['decl'] = 'value'
-end
-
-# intermediate
-class UnvaluedLiteral < Literal
-end
-
-%w[True False This Void ObjectLiteral Null].each do |node|
-      const_set "#{node}", Class.new(UnvaluedLiteral)		
-end
-
-# intermediate
-class ValueExpression < Expression 
-	contains_one_uni 'value', Expression
-end
-
-class Parenthetical < Expression
-   contains_one_uni 'value', Statement
-end
-
-%w[EmptyStament].each do |node|
-      const_set "#{node}", Class.new(Statement)		
-end
-
-class StringLiteral < Literal
-	has_attr 'value', String
-end
-
-class RegExp < Literal
-	has_attr 'value', String
-end
-
-class Number < Literal
-	has_attr 'value', Integer
-end
-
-class Array < Expression
-	contains_many_uni 'values', Statement
-	ParsingAdapters[self]['values'] = 'value'
-end
-
+  	wrap %w(
+  		Symbol
+  		Jump
+  		Scope
+  		ScriptNode
+  		AstRoot
+  		Name
+  		Block
+  		FunctionNode
+  		ExpressionStatement
+  		FunctionCall
+  		ParenthesizedExpression
+  		InfixExpression
+  		PropertyGet
+  		Assignment
+  		ObjectLiteral
+  		ObjectProperty
+  		KeywordLiteral
+  		ReturnStatement
+  		UnaryExpression
+  		ElementGet
+  		IfStatement
+  		StringLiteral
+  		ArrayLiteral
+  		Loop
+  		ForLoop
+  		ForInLoop
+  		NumberLiteral
+  		VariableInitializer
+  		VariableDeclaration
+  	)
+	 
 end
 
 end
