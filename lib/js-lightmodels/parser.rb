@@ -1,7 +1,9 @@
 require 'rkelly'
 require 'js-lightmodels/metamodel'
 
-module JsLightmodels
+module LightModels
+
+module Js
 
 class << self
 	attr_accessor :skip_unknown_node
@@ -132,6 +134,8 @@ def self.node_to_model(node)
 rescue Exception => e
 	puts "parent is #{node.class}"
 	raise e
+end
+
 end
 
 end

@@ -5,7 +5,7 @@ require 'js-lightmodels/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "js-lightmodels"
-  spec.version       = JsLightmodels::VERSION
+  spec.version       = LightModels::Js::VERSION
   spec.authors       = ["Federico Tomassetti"]
   spec.email         = ["f.tomassetti@gmail.com"]
   spec.description   = %q{Generate Lightmodels from Javascript source files}

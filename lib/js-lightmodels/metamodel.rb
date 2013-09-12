@@ -1,6 +1,8 @@
 require 'rgen/metamodel_builder'
 
-module JsLightmodels
+module LightModels
+
+module Js
 
 # value is mapped to body, if the metaclass has it
 
@@ -77,6 +79,8 @@ class Postfix < Expression
 	has_attr 'operator', String
 	contains_one_uni 'operand', Expression
 	ParsingAdapters[self]['operator'] = 'value'
+end
+
 end
 
 end
