@@ -10,10 +10,15 @@ class String
 		raise "'#{self}'' have not the right prefix '#{prefix}'" unless start_with?(prefix)
 		self[prefix.length..-1]
 	end
+	
+	def proper_capitalize 
+    	self[0, 1].upcase + self[1..-1]
+  	end
 
-	def uncapitalize 
+	def proper_uncapitalize 
     	self[0, 1].downcase + self[1..-1]
   	end
+
 end	
 
 module LightModels
@@ -23,18 +28,26 @@ module Js
 	JavaString  = ::Java::JavaClass.for_name("java.lang.String")
 	JavaList    = ::Java::JavaClass.for_name("java.util.List")
 	JavaBoolean = ::Java::boolean.java_class
-	JavaInt = ::Java::int.java_class
-	JavaDouble = ::Java::double.java_class
-	JavaArray = ::Java::int.java_class
+	JavaInt 	= ::Java::int.java_class
+	JavaDouble 	= ::Java::double.java_class
+	JavaArray 	= ::Java::int.java_class
 
 	MappedAstClasses = {}
 
-	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
-		#puts "type_name: #{type_name}"
+	def self.polish_type_name(type_name)
 		last = type_name.index '>'
 		type_name = type_name[0..last-1] if last
-		type_ast_class = MappedAstClasses.keys.find{|k| k.name==type_name}
-		rgen_class = MappedAstClasses[type_ast_class]
+		type_name
+	end
+
+	def self.get_metaclass_by_name(name)
+		k = MappedAstClasses.keys.find{|k| k.name==name}
+		MappedAstClasses[k]
+	end
+
+	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
+		type_name = polish_type_name(type_name)
+		rgen_class = get_metaclass_by_name(type_name)
 		if type_name=='org.mozilla.javascript.Node' or type_name=='org.mozilla.javascript.ast.AstNode'
 			rgen_class = RGen::MetamodelBuilder::MMBase
 		end
@@ -144,8 +157,9 @@ module Js
 	private
 
 	def self.property_name(java_method)
-		return java_method.name.remove_prefix('get').uncapitalize if java_method.name.start_with?('get')
-		return java_method.name.remove_prefix('is').uncapitalize if java_method.name.start_with?('is')
+		return java_method.name.remove_prefix('get').proper_uncapitalize if java_method.name.start_with?('get')
+		return java_method.name.remove_prefix('is').proper_uncapitalize if java_method.name.start_with?('is')
+		raise "Error"
 	end
 
 	def self.simple_java_class_name(java_class)
