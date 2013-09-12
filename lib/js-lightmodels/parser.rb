@@ -89,7 +89,8 @@ def self.assign_ref_to_model(model,ref,value)
 		value.each {|el| model.send(adder_method,node_to_model(el))}
 	else
 		setter_method = :"#{ref.name}="
-		value=value[0] if value.is_a?(Array)
+		#value=value[0] if value.is_a?(Array)
+		raise "Trying to assign an array to a single property. Class #{model.class}, property #{ref.name}" if value.is_a?(::Array)
 		model.send(setter_method,node_to_model(value))
 	end
 end
@@ -97,32 +98,49 @@ end
 def self.assign_att_to_model(model,att,value)
 	if att.many
 		adder_method = :"add#{att.name.capitalize}"
-		value.each {|el| model.send(adder_method,node_to_model(el))}
+		value.each {|el| model.send(adder_method,el)}
 	else
 		setter_method = :"#{att.name}="
-		value=value[0] if value.is_a?(Array)
-		model.send(setter_method,node_to_model(value))
+		#value=value[0] if value.is_a?(Array)
+		raise "Trying to assign an array to a single property. Class #{model.class}, property #{att.name}" if value.is_a?(::Array)
+		model.send(setter_method,value)
 	end
 end
 
 def self.node_to_model(node)
 	return node if node.is_a?(String)
 	return node if node.is_a?(Fixnum)
-	class_name = node.class.simple_name.remove_postfix('Node')
+	raise "Wrong node: #{node.class}" unless node.is_a? RKelly::Nodes::Node
+	if node.class.simple_name.end_with?('Node')
+		class_name = node.class.simple_name.remove_postfix('Node')
+	else
+ 		class_name = node.class.simple_name
+	end
 	if LightModels::Js.const_defined? class_name
 		model_class = LightModels::Js.const_get(class_name)
 		#puts "* model_class: #{model_class}"
 
 		model = model_class.new
 
-		model_class.ecore.eAllReferences.each do |ref|			
-			node_ref_value = node.send(reference_to_method(model_class,ref))
+		model_class.ecore.eAllReferences.each do |ref|		
+			method = reference_to_method(model_class,ref)	
+			raise "Node #{node} (#{node.class}) do not have property '#{ref.name}'. It was mapped to #{model_class}" unless node.respond_to?(method)
+			node_ref_value = node.send(method)
 			#puts "#{ref.name} = #{node_ref_value}"
 			assign_ref_to_model(model,ref,node_ref_value)
 		end
 
 		model_class.ecore.eAllAttributes.each do |att|			
-			node_att_value = node.send(attribute_to_method(model_class,att))
+			method = attribute_to_method(model_class,att)
+			unless node.respond_to?(method)
+				method_boolean = :"#{method}?"
+				if node.respond_to?(method_boolean)
+					method = method_boolean
+				else
+					raise "Node #{node} (#{node.class}) do not have attributey '#{att.name}'. It was mapped to #{model_class}" unless node.respond_to?(method)
+				end
+			end			
+			node_att_value = node.send(method)
 			#puts "#{ref.name} = #{node_ref_value}"
 			assign_att_to_model(model,att,node_att_value)
 		end

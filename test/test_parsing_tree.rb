@@ -6,6 +6,7 @@ class TestParsingTree < Test::Unit::TestCase
 
 	include TestHelper
 	include LightModels
+	include LightModels::Js
 
 	def test_the_root_is_parsed
 		code = "for(var i = 0; i < 10; i++) { var x = 5 + 5; }"
@@ -26,11 +27,12 @@ class TestParsingTree < Test::Unit::TestCase
 	def test_var_statement
 		r = Js.parse("var i = 0;")
 		assert_class VarStatement, r
-		assert_class VarDecl, r.decl
-		assert_equal 'i', r.decl.name
-		assert_class AssignExpr, r.decl.value
-		assert_class Number, r.decl.value.value
-		assert_equal 0, r.decl.value.value.value
+		assert_equal 1, r.decl.count
+		assert_class VarDecl, r.decl[0]
+		assert_equal 'i', r.decl[0].name
+		assert_class AssignExpr, r.decl[0].value
+		assert_class Number, r.decl[0].value.value
+		assert_equal 0, r.decl[0].value.value.value
 	end
 
 	def test_less
