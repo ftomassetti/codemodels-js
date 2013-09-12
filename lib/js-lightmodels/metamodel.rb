@@ -1,5 +1,7 @@
 require 'rgen/metamodel_builder'
 
+# TODO move some stuff to the lightmodels module
+
 class String
 	def remove_postfix(postfix)
 		raise "'#{self}'' have not the right postfix '#{postfix}'" unless end_with?(postfix)

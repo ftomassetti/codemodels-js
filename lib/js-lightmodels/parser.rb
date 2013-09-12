@@ -4,6 +4,8 @@ module LightModels
 
 module Js
 
+# TODO move some stuff to the lightmodels module
+
 class << self
 	attr_accessor :skip_unknown_node
 end
