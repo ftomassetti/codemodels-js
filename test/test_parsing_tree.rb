@@ -10,13 +10,13 @@ class TestParsingTree < Test::Unit::TestCase
 
 	def test_the_root_is_parsed
 		code = "for(var i = 0; i < 10; i++) { var x = 5 + 5; }"
-		r = Js.parse(code)
+		r = Js.parse_code(code)
 		assert_class For, r
 	end
 
 	def test_for
 		code = "for(var i = 0; i < 10; i++) { var x = 5 + 5; }"
-		r = Js.parse(code)
+		r = Js.parse_code(code)
 		assert_class For, r
 		assert_class VarStatement, r.init
 		assert_class Less, r.test
@@ -25,7 +25,7 @@ class TestParsingTree < Test::Unit::TestCase
 	end
 
 	def test_var_statement
-		r = Js.parse("var i = 0;")
+		r = Js.parse_code("var i = 0;")
 		assert_class VarStatement, r
 		assert_equal 1, r.decl.count
 		assert_class VarDecl, r.decl[0]
@@ -36,7 +36,7 @@ class TestParsingTree < Test::Unit::TestCase
 	end
 
 	def test_less
-		r = Js.parse("i < 10;")
+		r = Js.parse_code("i < 10;")
 		assert_class ExpressionStatement, r
 		assert_class Less, r.expression
 		assert_class Number, r.expression.right
@@ -46,7 +46,7 @@ class TestParsingTree < Test::Unit::TestCase
 	end
 
 	def test_postfix
-		r = Js.parse("i++;")
+		r = Js.parse_code("i++;")
 		assert_class ExpressionStatement, r
 		assert_class Postfix, r.expression
 		assert_class Resolve, r.expression.operand
@@ -54,7 +54,7 @@ class TestParsingTree < Test::Unit::TestCase
 	end
 
 	def test_block
-		r = Js.parse("{ var x = 5 + 5; }")
+		r = Js.parse_code("{ var x = 5 + 5; }")
 		assert_class Block, r
 		assert_class SourceElements, r.body
 		assert_equal 1, r.body.contents.count

@@ -11,13 +11,13 @@ ParsingAdapters = Hash.new {|h,k| h[k]={}}
 class Statement < RGen::MetamodelBuilder::MMBase
 end
 
-# ok
-class SourceElements < RGen::MetamodelBuilder::MMBase
-	contains_many_uni 'contents', Statement
-	ParsingAdapters[self]['contents'] = 'value'
+class Expression < Statement
 end
 
-class Expression < Statement
+# ok
+class SourceElements < Expression
+	contains_many_uni 'contents', Statement
+	ParsingAdapters[self]['contents'] = 'value'
 end
 
 # ok
@@ -29,7 +29,7 @@ end
 # checked
 class NewExpr < Expression
 	contains_one_uni 'type', Expression
-	contains_one_uni 'args', Expression
+	contains_one_uni 'arguments', Expression
 	ParsingAdapters[self]['type'] = 'value'
 end
 
@@ -39,7 +39,7 @@ end
 # checked
 class FunctionExpr < Expression
 	has_attr 'name', String
-	contains_one_uni 'body', Statement
+	contains_one_uni 'function_body', Statement
 	contains_many_uni 'arguments', Expression
 	ParsingAdapters[self]['name'] = 'value'
 end
@@ -50,8 +50,8 @@ end
 
 # checked
 class FunctionCall < Expression
-	contains_one_uni 'function', Expression
-	contains_many_uni 'arguments', Expression
+	contains_one_uni 'function', Statement
+	contains_many_uni 'arguments', Statement
 	ParsingAdapters[self]['function'] = 'value'
 end
 
@@ -93,6 +93,7 @@ class IfStatement < Statement
 	contains_one_uni 'else_block', Statement
 	ParsingAdapters[self]['test'] = 'conditions'
 	ParsingAdapters[self]['then_block'] = 'value'
+	ParsingAdapters[self]['else_block'] = 'else'
 end
 
 # checked
@@ -138,26 +139,52 @@ end
 
 # checked
 %w[Subtract LessOrEqual GreaterOrEqual Add Multiply NotEqual
-       DoWhile Switch LogicalAnd UnsignedRightShift Modulus While
+       LogicalAnd UnsignedRightShift Modulus
        NotStrictEqual Less With In Greater BitOr StrictEqual LogicalOr
        BitXOr LeftShift Equal BitAnd InstanceOf Divide RightShift].each do |node|
     const_set "#{node}", Class.new(BinaryExpression)
 end
 
+class CaseBlock < Statement
+	contains_many_uni 'values', Expression
+	ParsingAdapters[self]['values'] = 'value'
+end
+
+class Switch < Statement
+	contains_one_uni 'cases', CaseBlock
+	contains_one_uni 'condition', Expression
+	ParsingAdapters[self]['condition'] = 'left'
+	ParsingAdapters[self]['cases'] = 'value'	
+end
+
+class While < Statement
+	contains_one_uni 'body', Statement
+	contains_one_uni 'condition', Expression
+	ParsingAdapters[self]['condition'] = 'left'
+	ParsingAdapters[self]['body'] = 'value'
+end
+
+class DoWhile < Statement
+	#problem with this node?
+	contains_one_uni 'body', Statement
+	contains_one_uni 'condition', Expression
+	ParsingAdapters[self]['condition'] = 'left'
+	ParsingAdapters[self]['body'] = 'value'
+end
+
 # checked
-class OpEqual < Statement
+class OpEqual < Expression
 	contains_one_uni 'right', Expression
 	contains_one_uni 'left', Expression
 	ParsingAdapters[self]['right'] = 'value'	
 end
 
-# cheked
 %w[Multiply Divide LShift Minus Plus Mod XOr RShift And URShift Or].each do |node|
-    const_set "#{node}", Class.new(OpEqual)
+    const_set "Op#{node}Equal", Class.new(OpEqual)
 end
 
 # checked
-class CaseClauseNode < BinaryExpression
+class CaseClause < BinaryExpression
 end
 
 # checked
@@ -191,12 +218,48 @@ class ValuedStatement < Statement
 	contains_one_uni 'value', Expression
 end
 
-%w[Delete Return TypeOf
-       LogicalNot FunctionBody
-       UnaryMinus Throw BitwiseNot Element
-       CaseBlock Null Break Parameter
-       Arguments Attr Continue ConstStatement UnaryPlus].each do |node|
+%w[Delete Return
+       Throw
+       Break
+       Attr Continue ConstStatement].each do |node|
       const_set "#{node}", Class.new(ValuedStatement)
+end
+
+class UnaryMinus < Expression
+	contains_one_uni 'value', Expression
+end
+
+class UnaryPlus < Expression
+	contains_one_uni 'value', Expression
+end
+
+class TypeOf < Expression
+	contains_one_uni 'value', Expression
+end
+
+class LogicalNot < Expression
+	contains_one_uni 'value', Expression
+end
+
+class BitwiseNot < Expression
+	contains_one_uni 'value', Expression
+end
+
+class FunctionBody < Expression
+	contains_one_uni 'value', Expression
+end
+
+class Parameter < Expression
+	contains_one_uni 'value', Expression
+end
+
+class Element < Expression
+	contains_one_uni 'value', Expression
+end
+
+class Arguments < Expression
+	contains_many_uni 'values', Statement
+	ParsingAdapters[self]['values'] = 'value'
 end
 
 # ok
@@ -220,7 +283,7 @@ end
 class UnvaluedLiteral < Literal
 end
 
-%w[True False This Void ObjectLiteral].each do |node|
+%w[True False This Void ObjectLiteral Null].each do |node|
       const_set "#{node}", Class.new(UnvaluedLiteral)		
 end
 
@@ -229,8 +292,8 @@ class ValueExpression < Expression
 	contains_one_uni 'value', Expression
 end
 
-%w[Parenthetical].each do |node|
-      const_set "#{node}", Class.new(ValueExpression)		
+class Parenthetical < Expression
+   contains_one_uni 'value', Statement
 end
 
 %w[EmptyStament].each do |node|
@@ -249,8 +312,9 @@ class Number < Literal
 	has_attr 'value', Integer
 end
 
-class Array < RGen::MetamodelBuilder::MMBase
-	contains_many_uni 'values', Expression
+class Array < Expression
+	contains_many_uni 'values', Statement
+	ParsingAdapters[self]['values'] = 'value'
 end
 
 end

@@ -20,7 +20,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 	end
 
 	def assert_code_map_to(code,exp)
-		r = Js.parse(code)
+		r = Js.parse_code(code)
 		ser = LightModels::Serialization.jsonize_obj(r)
 		map = LightModels::Query.collect_values_with_count(ser)
 		assert_map(exp,map)

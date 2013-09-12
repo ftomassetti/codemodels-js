@@ -11,7 +11,8 @@ end
 
 def self.parse_file(path)
 	content = IO.read(path)
-	self.parse(content)
+	#puts "content size: #{content.length}"
+	self.parse_code(content)
 end
 
 class ParsingError < Exception
@@ -36,9 +37,35 @@ class UnknownNodeType < ParsingError
 
 end
 
-def self.parse(code)
+class RKellyLogger 
+
+	attr_accessor :errors, :debug_msgs
+
+	def initialize
+		@errors = []
+		@debug_msgs = []
+	end
+
+	def error(msg)
+		@errors << msg
+	end
+
+	def debug(msg)
+		@debug_msgs << msg
+	end
+
+end
+
+def self.parse_code(code)
 	parser = RKelly::Parser.new
+	logger = RKellyLogger.new
+	parser.logger = logger
+
 	tree = parser.parse(code)
+	if logger.errors.count > 0
+		raise "Parsing Errors: #{logger.errors}. Debug msgs: #{logger.debug_msgs}"
+	end
+	#puts "Tree: #{tree.class}"
 	tree_to_model(tree)
 end
 
@@ -84,6 +111,7 @@ def self.attribute_to_method(model_class,att)
 end
 
 def self.assign_ref_to_model(model,ref,value)
+	return unless value # we do not need to assign a nil...
 	if ref.many
 		adder_method = :"add#{ref.name.capitalize}"
 		value.each {|el| model.send(adder_method,node_to_model(el))}
@@ -93,6 +121,10 @@ def self.assign_ref_to_model(model,ref,value)
 		raise "Trying to assign an array to a single property. Class #{model.class}, property #{ref.name}" if value.is_a?(::Array)
 		model.send(setter_method,node_to_model(value))
 	end
+rescue Object => e
+	puts "Problem while assigning ref #{ref.name} (many? #{ref.many}) to #{model.class}. Value: #{value.class}"
+	puts "\t<<#{e}>>"
+	raise e
 end
 
 def self.assign_att_to_model(model,att,value)
@@ -108,10 +140,18 @@ def self.assign_att_to_model(model,att,value)
 end
 
 def self.node_to_model(node)
-	return node if node.is_a?(String)
+	if node.is_a?(String)
+		l = StringLiteral.new
+		l.value = node
+		return l
+	end
 	return node if node.is_a?(Fixnum)
 	raise "Wrong node: #{node.class}" unless node.is_a? RKelly::Nodes::Node
-	if node.class.simple_name.end_with?('Node')
+	if node.class.simple_name == 'StringNode'
+		class_name = 'StringLiteral'
+	elsif node.class.simple_name == 'IfNode'
+		class_name = 'IfStatement'		
+	elsif node.class.simple_name.end_with?('Node')
 		class_name = node.class.simple_name.remove_postfix('Node')
 	else
  		class_name = node.class.simple_name
