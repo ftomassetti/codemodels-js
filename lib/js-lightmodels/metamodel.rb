@@ -41,27 +41,41 @@ module Js
 	end
 
 	def self.get_metaclass_by_name(name)
+		return RGen::MetamodelBuilder::MMBase if is_base_class?(name)
 		k = MappedAstClasses.keys.find{|k| k.name==name}
 		MappedAstClasses[k]
+	end
+
+	def self.is_base_class?(name)
+		['org.mozilla.javascript.Node','org.mozilla.javascript.ast.AstNode'].include? name
+	end
+
+	def self.get_att_type(type_name)
+		case type_name
+		when JavaString.name
+			String
+		when JavaBoolean.name
+			RGen::MetamodelBuilder::DataTypes::Boolean
+		when JavaInt.name
+			Integer
+		when JavaDouble.name
+			Float				
+		else
+			nil
+		end
 	end
 
 	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
 		type_name = polish_type_name(type_name)
 		rgen_class = get_metaclass_by_name(type_name)
-		if type_name=='org.mozilla.javascript.Node' or type_name=='org.mozilla.javascript.ast.AstNode'
-			rgen_class = RGen::MetamodelBuilder::MMBase
-		end
 		if rgen_class
 			c.class_eval do
 				contains_many_uni prop_name, rgen_class
 			end
 		else
-			if type_name==JavaString.name
-				c.class_eval { has_many_attr prop_name, String }
-			elsif type_name==JavaBoolean.name
-				c.class_eval { has_many_attr prop_name, RGen::MetamodelBuilder::DataTypes::Boolean }
-			elsif type_name==JavaInt.name
-				c.class_eval { has_many_attr prop_name, Integer }
+			att_type = get_att_type(type_name)
+			if type_name
+				c.class_eval { has_many_attr prop_name, att_type } 
 			else
 				raise "#{ast_name}) Property (many) #{prop_name} is else: #{type_name}"
 			end
@@ -69,7 +83,6 @@ module Js
 	end
 
 	def self.wrap(ast_names)		
-
 		# first create all the classes
 		ast_names.each do |ast_name|
 			if ast_name=='Node'
@@ -119,18 +132,11 @@ module Js
 					prop_name = LightModels::Js.property_name(m)
 					if to_ignore.include?(prop_name)
 					#	puts "Skipping #{prop_name}"
-					elsif m.return_type==JavaString
-						has_attr prop_name, String
-					elsif m.return_type==JavaBoolean
-						has_attr prop_name, RGen::MetamodelBuilder::DataTypes::Boolean
-					elsif m.return_type==JavaInt
-						has_attr prop_name, Integer
-					elsif m.return_type==JavaDouble
-						has_attr prop_name, Float						
+					elsif Js.get_att_type(m.return_type.name)
+						has_attr prop_name, Js.get_att_type(m.return_type.name)
 					elsif MappedAstClasses.has_key?(m.return_type)
 						contains_one_uni prop_name, MappedAstClasses[m.return_type]
 					elsif m.return_type==JavaList
-	#					puts "Property #{prop_name} is a list"
 						type_name = LightModels::Js.get_generic_param(m.to_generic_string)
 						LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
 					elsif m.return_type.array?
@@ -142,8 +148,6 @@ module Js
 					else
 						raise "#{ast_name}) Property (single) '#{prop_name}' is else: #{m.return_type}"
 					end
-					#type = nil
-					#contains_one_uni prop_name, type
 				end
 			end
 		end
@@ -151,7 +155,7 @@ module Js
 
 	def self.get_corresponding_metaclass(node_class)
 		name = simple_java_class_name(node_class)
-		return Js.const_get(name)
+		Js.const_get(name)
 	end
 
 	private
@@ -171,11 +175,7 @@ module Js
   	def self.get_generic_param(generic_str)
   		return generic_str.remove_prefix('public java.util.List<') if generic_str.start_with?('public java.util.List<')
   		return generic_str.remove_prefix('public final java.util.List<') if generic_str.start_with?('public final java.util.List<')
-  		nil
-  	end
-
-  	def self.declared_methods(java_class)
-
+  		raise "Error"
   	end
 
   	wrap %w(
