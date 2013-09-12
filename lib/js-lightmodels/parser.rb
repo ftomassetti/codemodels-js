@@ -57,8 +57,8 @@ def self.node_properties(node)
 end
 
 def self.adapter(model_class,ref)
-	if JsLightmodels::ParsingAdapters[model_class] && JsLightmodels::ParsingAdapters[model_class][ref.name]
-		JsLightmodels::ParsingAdapters[model_class][ref.name]
+	if LightModels::Js::ParsingAdapters[model_class] && LightModels::Js::ParsingAdapters[model_class][ref.name]
+		LightModels::Js::ParsingAdapters[model_class][ref.name]
 	else
 		if model_class.superclass!=Object
 			adapter(model_class.superclass,ref) 
@@ -109,8 +109,8 @@ def self.node_to_model(node)
 	return node if node.is_a?(String)
 	return node if node.is_a?(Fixnum)
 	class_name = node.class.simple_name.remove_postfix('Node')
-	if JsLightmodels.const_defined? class_name
-		model_class = JsLightmodels.const_get(class_name)
+	if LightModels::Js.const_defined? class_name
+		model_class = LightModels::Js.const_get(class_name)
 		#puts "* model_class: #{model_class}"
 
 		model = model_class.new
