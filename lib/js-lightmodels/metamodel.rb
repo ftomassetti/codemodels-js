@@ -6,12 +6,14 @@ module LightModels
 
 module Js
 
-	JavaString  = ::Java::JavaClass.for_name("java.lang.String")
-	JavaList    = ::Java::JavaClass.for_name("java.util.List")
-	JavaBoolean = ::Java::boolean.java_class
-	JavaInt 	= ::Java::int.java_class
-	JavaDouble 	= ::Java::double.java_class
-	JavaArray 	= ::Java::int.java_class
+	JavaString    = ::Java::JavaClass.for_name("java.lang.String")
+	JavaList      = ::Java::JavaClass.for_name("java.util.List")
+	JavaSortedSet = ::Java::JavaClass.for_name("java.util.SortedSet")
+	JavaBoolean   = ::Java::boolean.java_class
+	JavaInt 	  = ::Java::int.java_class
+	JavaDouble 	  = ::Java::double.java_class
+	JavaArray 	  = ::Java::int.java_class
+	JavaCollectionTypes = [JavaList,JavaSortedSet]
 
 	MappedAstClasses = {}
 
@@ -110,7 +112,7 @@ module Js
 							has_attr prop_name, Js.get_att_type(m.return_type.name)
 						elsif MappedAstClasses.has_key?(m.return_type)
 							contains_one_uni prop_name, MappedAstClasses[m.return_type]
-						elsif m.return_type==JavaList
+						elsif JavaCollectionTypes.include?(m.return_type)
 							type_name = LightModels::Js.get_generic_param_name(m.to_generic_string)
 							LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
 						elsif m.return_type.array?
@@ -153,7 +155,7 @@ module Js
 
   	def self.get_generic_param_name(generic_str)
   		type_name = nil
-  		collections = ['java.util.List','java.util.SortedSet']  		
+  		collections = JavaCollectionTypes.select{|ct|ct.name}  		
   		collections.each do |c|
   			prefixes = ["public #{c}<","public final #{c}<"]
   			prefixes.each do |p|
