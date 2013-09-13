@@ -52,4 +52,31 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_code_map_to(code, {'x'=> 1, 5 => 2})		
 	end
 
+	def test_snippet_1
+		code = "var lowercase = function(string){return isString(string) ? string.toLowerCase() : string;};"
+		assert_code_map_to(code, {'lowercase'=> 1, 'string' => 4, 'isString' => 1, 'toLowercase' => 1})
+	end
+
+	def test_snippet_2
+		code = %q{
+			var manualLowercase = function(s) {
+			  return isString(s)
+			      ? s.replace(/[A-Z]/g, function(ch) {return String.fromCharCode(ch.charCodeAt(0) | 32);})
+			      : s;
+			};
+			var manualUppercase = function(s) {
+			  return isString(s)
+			      ? s.replace(/[a-z]/g, function(ch) {return String.fromCharCode(ch.charCodeAt(0) & ~32);})
+			      : s;
+			};
+		}
+		assert_code_map_to(code, {
+			'manualLowercase'=> 1, 'manualUppercase'=>1,
+			's' => 4, 'isString' => 2, 'replace' => 2, 
+			'A-Z'=>1, 'a-z'=>1,
+			'ch'=>4, 'String'=>2,
+			'fromCharCode'=>2, 'charCodeAt'=>2, 
+			0=>2, 32=>2})
+	end
+
 end
