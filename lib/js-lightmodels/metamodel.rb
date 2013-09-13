@@ -6,6 +6,14 @@ module LightModels
 
 module Js
 
+	class << self
+		attr_accessor :verbose
+	end
+
+	verbose = false
+
+	java_import 'org.mozilla.javascript.ast.AstNode'
+
 	JavaString    = ::Java::JavaClass.for_name("java.lang.String")
 	JavaList      = ::Java::JavaClass.for_name("java.util.List")
 	JavaSortedSet = ::Java::JavaClass.for_name("java.util.SortedSet")
@@ -17,7 +25,7 @@ module Js
 	MappedAstClasses = {}
 
 	def self.get_metaclass_by_name(name)
-		return RGen::MetamodelBuilder::MMBase if is_base_class?(name)
+		return JsNode if is_base_class?(name)
 		k = MappedAstClasses.keys.find{|k| k.name==name}
 		MappedAstClasses[k]
 	end
@@ -67,14 +75,15 @@ module Js
 
 	def self.metasuperclass(java_super_class)
 		if is_base_class?(java_super_class.name)				
-			RGen::MetamodelBuilder::MMBase
+			JsNode
 		else
-			raise "Super class #{java_super_class.name} of #{java_class.name}. It should be wrapped before this class!" unless MappedAstClasses[java_super_class]
+			raise "Super class #{java_super_class.name} not found, it should be wrapped before the classes extending it!" unless MappedAstClasses[java_super_class]
 			MappedAstClasses[java_super_class]
 		end
 	end
 
 	def self.add_feature(c,name,type,multiplicity)
+		return unless type # type nil means to ignore the feature
 		method = if Js.get_att_type(type)
 			multiplicity==:many ? :has_many_attr : :has_attr
 		else
@@ -116,8 +125,10 @@ module Js
 				ast_class.java_class.declared_instance_methods.select { |m| Js.getter?(m) }.each do |m|
 					prop_name = LightModels::Js.property_name(m)
 					unless to_ignore.include?(prop_name)
-						if PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]						
+						if PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]	
+							#puts "Adapting #{ast_class.simple_name} #{prop_name}"					
 							adapter = PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]
+							#puts "Type of adapter = #{adapter[:type]==nil}"
 							Js.add_feature(c,prop_name,adapter[:type],adapter[:multiplicity])
 						elsif Js.get_att_type(m.return_type)
 							# the type is simple (-> attribute)
@@ -131,7 +142,8 @@ module Js
 						elsif m.return_type.array?
 							LightModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
 						elsif Js.is_base_class?(m.return_type.name)
-							contains_one_uni prop_name, RGen::MetamodelBuilder::MMBase					
+							#puts "#{ast_class.simple_name} #{prop_name} is base type"		
+							contains_one_uni prop_name, JsNode
 						else
 							raise "#{ast_name}) Property (single) '#{prop_name}' is else: #{m.return_type}"
 						end
@@ -148,6 +160,9 @@ module Js
 	def self.get_corresponding_metaclass(node_class)
 		name = simple_java_class_name(node_class)
 		Js.const_get(name)
+	end
+
+	class JsNode < RGen::MetamodelBuilder::MMBase
 	end
 
 	private
@@ -181,8 +196,49 @@ module Js
 
 	PROP_ADAPTERS = Hash.new {|h,k| h[k] = {} }
 
+	def self.get_feature_value_through_getter(node,feat_name)
+		capitalized_name = feat_name.proper_capitalize
+		methods = [:"get#{capitalized_name}",:"is#{capitalized_name}"]
+
+		methods.each do |m|
+			if node.respond_to?(m)
+				begin
+					return node.send(m)
+				rescue Object => e
+					raise "Problem invoking #{m} on #{node.class}: #{e}"
+				end
+			end
+		end
+		raise "how should I get this... #{feat_name} on #{node.class}. It does not respond to #{methods}"
+	end
+
+	# If the feature is inherite I need to look among my super classes for
+	# adapters
+	def self.get_adapter(node_class,feat_name)
+		class_name = simple_java_class_name(node_class)
+		adapter = PROP_ADAPTERS[class_name.to_sym][feat_name.to_sym]
+		return adapter if adapter
+		# TODO stop at RGen::MetamodelBuilder::MMBase
+		return get_adapter(node_class.superclass,feat_name) if node_class.superclass
+		nil
+	end
+
+	def self.get_feature_value(node,feat_name)
+		adapter = get_adapter(node.class,feat_name)		
+		if adapter
+			#puts "Using adapter for #{node.class} #{feat_name}"
+			adapter[:adapter].call(node)
+		else
+			get_feature_value_through_getter(node,feat_name)
+		end
+	end
+
 	def self.record_prop_adapter(node_type,prop_name,prop_type,&adapter)
 		PROP_ADAPTERS[node_type][prop_name]   = {type: prop_type, multiplicity: :single, adapter: adapter}
+	end
+
+	def self.ignore_prop(node_type,prop_name)
+		record_prop_adapter(node_type,prop_name,nil)
 	end
 
 	java_import 'org.mozilla.javascript.Token'
@@ -194,6 +250,19 @@ module Js
 		end
 		raise "Unexpected value: #{declTypeCode}"
 	end
+
+	record_prop_adapter(:InfixExpression,:operator,String) do |node|
+		operator_code = node.send(:getType)
+		begin
+			AstNode::operatorToString(operator_code)		
+		rescue
+			puts "I can not get the operator for node #{node.class} (value: #{operator_code})" if verbose
+			nil
+		end
+	end
+
+	ignore_prop(:PropertyGet,:target)  # alias for left
+	ignore_prop(:PropertyGet,:property) # alias for right	
 
   	wrap %w(
   		Symbol

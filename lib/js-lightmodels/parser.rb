@@ -108,30 +108,15 @@ def self.assign_att_to_model(model,att,value)
 	end
 end
 
-def self.get_value(node,name)
-	capitalized_name = name.proper_capitalize
-	methods = [:"get#{capitalized_name}",:"is#{capitalized_name}"]
-
-	methods.each do |m|
-		if node.respond_to?(m)
-			begin
-				return node.send(m)
-			rescue Object => e
-				raise "Problem invoking #{m} on #{node.class}: #{e}"
-			end
-		end
-	end
-	raise "how should I get this... #{name} on #{node.class}. It does not respond to #{methods}"
-end
-
 def self.populate_attr(node,att,model)	
-	value = get_value(node,att.name)
+	value = get_feature_value(node,att.name)
+	#puts "Value got for #{node.class} #{att} : #{value.class}"
 	# nil are ignored
 	model.send(:"#{att.name}=",value) if value
 end
 
 def self.populate_ref(node,ref,model)
-	value = get_value(node,ref.name)
+	value = get_feature_value(node,ref.name)
 	if value
 		if value==node
 			puts "avoiding loop... #{ref.name}, class #{node.class}" 
