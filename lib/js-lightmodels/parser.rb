@@ -88,7 +88,6 @@ def self.assign_ref_to_model(model,ref,value)
 		value.each {|el| model.send(adder_method,node_to_model(el))}
 	else
 		setter_method = :"#{ref.name}="
-		#value=value[0] if value.is_a?(Array)
 		raise "Trying to assign an array to a single property. Class #{model.class}, property #{ref.name}" if value.is_a?(::Array)
 		model.send(setter_method,node_to_model(value))
 	end
@@ -104,14 +103,13 @@ def self.assign_att_to_model(model,att,value)
 		value.each {|el| model.send(adder_method,el)}
 	else
 		setter_method = :"#{att.name}="
-		#value=value[0] if value.is_a?(Array)
 		raise "Trying to assign an array to a single property. Class #{model.class}, property #{att.name}" if value.is_a?(::Array)
 		model.send(setter_method,value)
 	end
 end
 
 def self.get_value(node,name)
-	capitalized_name = name.capitalize[0]+name[1..-1]
+	capitalized_name = name.proper_capitalize
 	methods = [:"get#{capitalized_name}",:"is#{capitalized_name}"]
 
 	methods.each do |m|
@@ -128,8 +126,8 @@ end
 
 def self.populate_attr(node,att,model)	
 	value = get_value(node,att.name)
+	# nil are ignored
 	model.send(:"#{att.name}=",value) if value
-	#puts " * populate att #{att.name}"
 end
 
 def self.populate_ref(node,ref,model)
@@ -139,21 +137,15 @@ def self.populate_ref(node,ref,model)
 			puts "avoiding loop... #{ref.name}, class #{node.class}" 
 			return
 		end
-		#puts "\tvalue #{value.class}"
 		if value.is_a?(Java::JavaUtil::Collection)
-			capitalized_name = ref.name.capitalize[0]+ref.name[1..-1]	
-			#puts "Methods of #{model.class}: #{model.methods}"
+			capitalized_name = ref.name.proper_capitalize	
 			value.each do |el|
-				#puts "\t\tassigning el #{el.class}"
 				model.send(:"add#{capitalized_name}",node_to_model(el))
 			end
 		else
-			#puts "\t\tassigning #{value.class}"
 			model.send(:"#{ref.name}=",node_to_model(value))
 		end
 	end
-#rescue Object => e
-#	puts "Problem while populating ref #{ref.name} of #{node.class}: #{e}"
 end
 
 def self.node_to_model(node)
@@ -163,7 +155,6 @@ def self.node_to_model(node)
 		populate_attr(node,attr,instance)
 	end
 	metaclass.ecore.eAllReferences.each do |ref|
-		#puts "Populating ref #{ref.name}"
 		populate_ref(node,ref,instance)
 	end
 	instance

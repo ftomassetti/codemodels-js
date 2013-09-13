@@ -27,8 +27,10 @@ module Js
 		['org.mozilla.javascript.Node','org.mozilla.javascript.ast.AstNode','java.lang.Object'].include? name
 	end
 
+	# Works with both Java and Ruby type
 	def self.get_att_type(type)
-		return String if type.enum?
+		return type if [String,RGen::MetamodelBuilder::DataTypes::Boolean,Integer,Float].include?(type)
+		return String if type.respond_to?(:enum?) and type.enum?		
 		case type
 		when JavaString
 			String
@@ -72,6 +74,15 @@ module Js
 		end
 	end
 
+	def self.add_feature(c,name,type,multiplicity)
+		method = if Js.get_att_type(type)
+			multiplicity==:many ? :has_many_attr : :has_attr
+		else
+			multiplicity==:many ? :contains_many_uni : :contains_one_uni
+		end
+		c.send(method,name,type)
+	end
+
 	def self.wrap(ast_names)		
 		# first create all the classes
 		ast_names.each do |ast_name|
@@ -105,7 +116,10 @@ module Js
 				ast_class.java_class.declared_instance_methods.select { |m| Js.getter?(m) }.each do |m|
 					prop_name = LightModels::Js.property_name(m)
 					unless to_ignore.include?(prop_name)
-						if Js.get_att_type(m.return_type)
+						if PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]						
+							adapter = PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]
+							Js.add_feature(c,prop_name,adapter[:type],adapter[:multiplicity])
+						elsif Js.get_att_type(m.return_type)
 							# the type is simple (-> attribute)
 							has_attr prop_name, Js.get_att_type(m.return_type)
 						elsif MappedAstClasses.has_key?(m.return_type)
@@ -163,7 +177,23 @@ module Js
   		end
   		raise "I don't know how to get the generic param from '#{generic_str}'" unless type_name
   		type_name
-  	end
+  	end  	
+
+	PROP_ADAPTERS = Hash.new {|h,k| h[k] = {} }
+
+	def self.record_prop_adapter(node_type,prop_name,prop_type,&adapter)
+		PROP_ADAPTERS[node_type][prop_name]   = {type: prop_type, multiplicity: :single, adapter: adapter}
+	end
+
+	java_import 'org.mozilla.javascript.Token'
+
+	record_prop_adapter(:Symbol,:declType,String) do |node|
+		declTypeCode = node.send(:getDeclType)
+		%w(FUNCTION LP VAR LET CONST).each do |name|
+			return name if (declTypeCode == Token.get_const(name))
+		end
+		raise "Unexpected value: #{declTypeCode}"
+	end
 
   	wrap %w(
   		Symbol
