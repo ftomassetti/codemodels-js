@@ -34,6 +34,9 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
 
+		assert_all_attrs ['operator'],     c
+		assert_all_refs  ['left','right'], c
+
 		assert_equal 0,c.ecore.eAttributes.count
 		assert_equal 0,c.ecore.eReferences.count
 	end
