@@ -91,7 +91,7 @@ module Js
 			ast_class  = java_class.ruby_class
 			c = MappedAstClasses[java_class]
 				
-			to_ignore = %w( symbolTable compilerData comments liveLocals regexpString
+			to_ignore = %w( symbolTable compilerData liveLocals regexpString
 				regexpFlags indexForNameNode paramAndVarCount paramAndVarNames
 				paramAndVarConst jumpStatement finally loop default continue
 				containingTable definingScope parentScope top quoteCharacter
