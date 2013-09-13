@@ -15,12 +15,6 @@ module Js
 
 	MappedAstClasses = {}
 
-	def self.polish_type_name(type_name)
-		last = type_name.index '>'
-		type_name = type_name[0..last-1] if last
-		type_name
-	end
-
 	def self.get_metaclass_by_name(name)
 		return RGen::MetamodelBuilder::MMBase if is_base_class?(name)
 		k = MappedAstClasses.keys.find{|k| k.name==name}
@@ -47,7 +41,6 @@ module Js
 	end
 
 	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
-		type_name = polish_type_name(type_name)
 		rgen_class = get_metaclass_by_name(type_name)
 		if rgen_class
 			c.class_eval do
@@ -110,32 +103,33 @@ module Js
 			 )
 
 			c.class_eval do
-				ast_class.java_class.declared_instance_methods.select do |m| 
-					(m.name.start_with?('get')||m.name.start_with?('is')) and m.argument_types.count==0					
-				end.each do |m|
-
+				ast_class.java_class.declared_instance_methods.select { |m| Js.getter?(m) }.each do |m|
 					prop_name = LightModels::Js.property_name(m)
-					if to_ignore.include?(prop_name)
-					#	puts "Skipping #{prop_name}"
-					elsif Js.get_att_type(m.return_type.name)
-						has_attr prop_name, Js.get_att_type(m.return_type.name)
-					elsif MappedAstClasses.has_key?(m.return_type)
-						contains_one_uni prop_name, MappedAstClasses[m.return_type]
-					elsif m.return_type==JavaList
-						type_name = LightModels::Js.get_generic_param(m.to_generic_string)
-						LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
-					elsif m.return_type.array?
-						LightModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
-					elsif m.return_type.enum?
-						has_attr prop_name, String
-					elsif m.return_type.name=='org.mozilla.javascript.Node' or m.return_type.name=='org.mozilla.javascript.ast.AstNode'
-						contains_one_uni prop_name, RGen::MetamodelBuilder::MMBase					
-					else
-						raise "#{ast_name}) Property (single) '#{prop_name}' is else: #{m.return_type}"
+					unless to_ignore.include?(prop_name)
+						if Js.get_att_type(m.return_type.name)
+							has_attr prop_name, Js.get_att_type(m.return_type.name)
+						elsif MappedAstClasses.has_key?(m.return_type)
+							contains_one_uni prop_name, MappedAstClasses[m.return_type]
+						elsif m.return_type==JavaList
+							type_name = LightModels::Js.get_generic_param_name(m.to_generic_string)
+							LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
+						elsif m.return_type.array?
+							LightModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
+						elsif m.return_type.enum?
+							has_attr prop_name, String
+						elsif m.return_type.name=='org.mozilla.javascript.Node' or m.return_type.name=='org.mozilla.javascript.ast.AstNode'
+							contains_one_uni prop_name, RGen::MetamodelBuilder::MMBase					
+						else
+							raise "#{ast_name}) Property (single) '#{prop_name}' is else: #{m.return_type}"
+						end
 					end
 				end
 			end
 		end
+	end
+
+	def self.getter?(java_method)
+		(java_method.name.start_with?('get')||java_method.name.start_with?('is')) and java_method.argument_types.count==0		
 	end
 
 	def self.get_corresponding_metaclass(node_class)
@@ -157,10 +151,19 @@ module Js
     	r
   	end
 
-  	def self.get_generic_param(generic_str)
-  		return generic_str.remove_prefix('public java.util.List<') if generic_str.start_with?('public java.util.List<')
-  		return generic_str.remove_prefix('public final java.util.List<') if generic_str.start_with?('public final java.util.List<')
-  		raise "Error"
+  	def self.get_generic_param_name(generic_str)
+  		type_name = nil
+  		collections = ['java.util.List','java.util.SortedSet']  		
+  		collections.each do |c|
+  			prefixes = ["public #{c}<","public final #{c}<"]
+  			prefixes.each do |p|
+				type_name = generic_str.remove_prefix(p) if generic_str.start_with?(p)  			
+				last = type_name.index '>'
+				type_name = type_name[0..last-1] if last
+			end
+  		end
+  		raise "I don't know how to get the generic param from '#{generic_str}'" unless type_name
+  		type_name
   	end
 
   	wrap %w(
