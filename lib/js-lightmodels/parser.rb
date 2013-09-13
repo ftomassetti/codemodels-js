@@ -1,4 +1,5 @@
 require 'js-lightmodels/metamodel'
+require 'js-lightmodels/monkey_patching'
 
 module LightModels
 
