@@ -10,12 +10,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def assert_map(exp,map)
 		# ignore boolean values...
-		map.delete true
-		map.delete false
+		#map.delete true
+		#map.delete false
 
 		#assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map.keys}"
 		exp.each do |k,v|
-			assert_equal exp[k],map[v], "Expected #{k} to have #{exp[k]} instances, it has #{map[k]}"
+			assert_equal exp[k],map[k.to_s], "Expected #{k} to have #{exp[k]} instances, it has #{map[k.to_s]}. Keys of the map: #{map.keys}"
 		end
 	end
 
