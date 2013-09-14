@@ -54,6 +54,13 @@ def self.tree_to_model(tree)
 	node_to_model(tree)
 end
 
+def self.adapter_specific_class(model_class,ref)
+	return nil unless LightModels::Js::ParsingAdapters[model_class]
+	LightModels::Js::ParsingAdapters[model_class][ref.name]
+end
+
+# TODO remove code below, moved to LightModels
+
 def self.adapter(model_class,ref)
 	if LightModels::Js::ParsingAdapters[model_class] && LightModels::Js::ParsingAdapters[model_class][ref.name]
 		LightModels::Js::ParsingAdapters[model_class][ref.name]
