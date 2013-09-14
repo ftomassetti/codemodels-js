@@ -15,11 +15,11 @@ module Js
 	java_import 'org.mozilla.javascript.ast.AstNode'
 
 	JavaString    = ::Java::JavaClass.for_name("java.lang.String")
-	JavaList      = ::Java::JavaClass.for_name("java.util.List")
-	JavaSortedSet = ::Java::JavaClass.for_name("java.util.SortedSet")
 	JavaBoolean   = ::Java::boolean.java_class
 	JavaInt 	  = ::Java::int.java_class
 	JavaDouble 	  = ::Java::double.java_class
+	JavaList      = ::Java::JavaClass.for_name("java.util.List")
+	JavaSortedSet = ::Java::JavaClass.for_name("java.util.SortedSet")
 	JavaCollectionTypes = [JavaList,JavaSortedSet]
 
 	MappedAstClasses = {}
