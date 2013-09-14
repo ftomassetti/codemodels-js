@@ -15,7 +15,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 		#assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map.keys}"
 		exp.each do |k,v|
-			assert_equal exp[k],v, "Expected #{k} to have #{exp[k]} instances, it has #{map[k]}"
+			assert_equal exp[k],map[v], "Expected #{k} to have #{exp[k]} instances, it has #{map[k]}"
 		end
 	end
 
