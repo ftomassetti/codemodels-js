@@ -6,6 +6,8 @@ module LightModels
 
 module Js
 
+	@@additional_props = Hash.new {|h,k| h[k]={} }
+
 	class << self
 		attr_accessor :verbose
 	end
@@ -25,6 +27,7 @@ module Js
 	MappedAstClasses = {}
 
 	def self.get_metaclass_by_name(name)
+		return JsNode if name=='JsNode'
 		return JsNode if is_base_class?(name)
 		k = MappedAstClasses.keys.find{|k| k.name==name}
 		MappedAstClasses[k]
@@ -53,8 +56,37 @@ module Js
 		end
 	end
 
+	def self.add_ref_or_att(c,type_name,prop_name,ast_name,multiplicity=:single)
+		#puts "Adding #{type_name} to #{c}"
+		case multiplicity
+		when :single
+			add_single_ref_or_att(c,type_name,prop_name,ast_name)
+		when :many
+			add_many_ref_or_att(c,type_name,prop_name,ast_name)
+		else
+			raise "wrong"
+		end
+	end
+
+	def self.add_single_ref_or_att(c,type_name,prop_name,ast_name)
+		rgen_class = get_metaclass_by_name(type_name)
+		if rgen_class
+			c.class_eval do
+				contains_one_uni prop_name, rgen_class
+			end
+		else
+			att_type = get_att_type(type_name)
+			if type_name
+				c.class_eval { has_attr prop_name, att_type } 
+			else
+				raise "#{ast_name}) Property (many) #{prop_name} is else: #{type_name}"
+			end
+		end
+	end	
+
 	def self.add_many_ref_or_att(c,type_name,prop_name,ast_name)
 		rgen_class = get_metaclass_by_name(type_name)
+		#puts "\trgen_class: #{rgen_class} from #{type_name} #{type_name.class}"
 		if rgen_class
 			c.class_eval do
 				contains_many_uni prop_name, rgen_class
@@ -157,8 +189,27 @@ module Js
 		(java_method.name.start_with?('get')||java_method.name.start_with?('is')) and java_method.argument_types.count==0		
 	end
 
-	def self.get_corresponding_metaclass(node_class)
+	def self.get_corresponding_metaclass(node)
+		node_class = node.class
 		name = simple_java_class_name(node_class)
+		if name=='InfixExpression'
+			operator = AstNode::operatorToString(node.operator)
+			name = INFIX_OPERATORS[operator]
+			raise "Unknown operator for infix expression: #{operator}" unless name
+		end
+		if name=='UnaryExpression'
+			operator = AstNode::operatorToString(node.operator)
+			name = case operator
+			when '++'
+				node.prefix ? 'PrefixIncrement' : 'PostfixIncrement'
+			when '--'
+				node.prefix ? 'PrefixDecrement' : 'PostfixDecrement'
+			when '~'
+				'BitwiseNot'
+			else
+				raise "Unknown unary operator: #{operator}"
+			end
+		end
 		Js.const_get(name)
 	end
 
@@ -212,10 +263,13 @@ module Js
 		raise "how should I get this... #{feat_name} on #{node.class}. It does not respond to #{methods}"
 	end
 
-	# If the feature is inherite I need to look among my super classes for
+	# If the feature is inherited I need to look among my super classes for
 	# adapters
 	def self.get_adapter(node_class,feat_name)
+		raise "Error" unless node_class
+		raise "Error: nil feat_name" unless feat_name
 		class_name = simple_java_class_name(node_class)
+		raise "Error" unless class_name
 		adapter = PROP_ADAPTERS[class_name.to_sym][feat_name.to_sym]
 		return adapter if adapter
 		# TODO stop at RGen::MetamodelBuilder::MMBase
@@ -224,6 +278,7 @@ module Js
 	end
 
 	def self.get_feature_value(node,feat_name)
+		raise "Error: nil feat_name" unless feat_name
 		adapter = get_adapter(node.class,feat_name)		
 		if adapter
 			#puts "Using adapter for #{node.class} #{feat_name}"
@@ -261,8 +316,53 @@ module Js
 		end
 	end
 
-	ignore_prop(:PropertyGet,:target)  # alias for left
-	ignore_prop(:PropertyGet,:property) # alias for right	
+	record_prop_adapter(:FunctionNode,:name,String) do |node|
+		name = node.name
+		name = nil if name==''
+		name
+	end
+
+	def self.add_prop(node_type,prop_name,prop_type,multiplicity=:single,&getter)
+		@@additional_props[node_type][prop_name] = {prop_type:prop_type,multiplicity:multiplicity,getter:getter}
+		c = Js.const_get(node_type.to_s)
+		raise "Error" unless c
+		raise "No name" unless prop_name
+		add_ref_or_att(c,prop_type.to_s,prop_name.to_s,node_type.to_s,multiplicity)
+	end
+
+	# TODO consider superclass
+	def self.additional_properties(node_class)
+		node_type_name = simple_java_class_name(node_class).to_sym		
+		@@additional_props[node_type_name]
+	end
+
+	def self.additional_property?(node_class,prop_name)
+		node_type_name = simple_java_class_name(node_class).to_sym		
+		@@additional_props[node_type_name][prop_name.to_sym]
+	end
+
+	ignore_prop(:PropertyGet,:target)        # alias for left
+	ignore_prop(:PropertyGet,:property) 	 # alias for right	
+	ignore_prop(:InfixExpression, :operator) # we use a different subclass to discriminate
+	ignore_prop(:UnaryExpression, :operator)
+	ignore_prop(:UnaryExpression, :postfix)
+	ignore_prop(:UnaryExpression, :prefix)
+	ignore_prop(:Loop, :rp) # position of right paren...
+	ignore_prop(:Loop, :lp) # position of left paren...
+	ignore_prop(:FunctionNode, :lp)
+	ignore_prop(:FunctionNode, :rp)	
+	ignore_prop(:FunctionNode, :expressionClosure)
+	ignore_prop(:FunctionNode, :generator)
+	ignore_prop(:FunctionNode, :functionType)
+	ignore_prop(:FunctionNode, :getterOrSetter)
+	ignore_prop(:FunctionNode, :getter)
+	ignore_prop(:FunctionNode, :setter)
+
+	ignore_prop(:FunctionCall, :lp)
+	ignore_prop(:FunctionCall, :rp)	
+
+	ignore_prop(:ConditionalExpression, :questionMarkPosition)
+	ignore_prop(:ConditionalExpression, :colonPosition)
 
   	wrap %w(
   		Symbol
@@ -294,8 +394,46 @@ module Js
   		NumberLiteral
   		VariableInitializer
   		VariableDeclaration
+  		ConditionalExpression
+  		RegExpLiteral
   	)
-	 
+
+	INFIX_OPERATORS = {
+		'+' => 'AddInfixExpression',
+		'-' => 'SubInfixExpression',
+		'/' => 'DivInfixExpression', 
+		'*' => 'MulInfixExpression',				
+		'<' => 'LessInfixExpression',
+		'>' => 'MoreInfixExpression',							
+		'<=' => 'LessEqualInfixExpression',
+		'>=' => 'MoreEqualInfixExpression',
+		'|'  => 'BitOrInfixExpression',
+		'&'  => 'BitAndInfixExpression'
+	}
+	INFIX_OPERATORS.values.each do |io|
+		c = Class.new(InfixExpression)
+		Js.const_set(io,c)
+	end
+	
+	class PostfixIncrement < UnaryExpression
+	end
+	class PrefixIncrement < UnaryExpression
+	end
+	class PostfixDecrement < UnaryExpression
+	end
+	class PrefixDecrement < UnaryExpression
+	end
+	class BitwiseNot < UnaryExpression
+	end
+
+	add_prop(:Block,:contents,:JsNode,:many) do |node|
+		l = java.util.LinkedList.new
+		node.each do |el|
+			l.add(el)
+		end
+		l
+	end
+
 end
 
 end

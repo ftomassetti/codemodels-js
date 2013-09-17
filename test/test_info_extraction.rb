@@ -13,7 +13,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 		#map.delete true
 		#map.delete false
 
-		#assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map.keys}"
+		assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map.keys}"
 		exp.each do |k,v|
 			assert_equal exp[k],map[k.to_s], "Expected #{k} to have #{exp[k]} instances, it has #{map[k.to_s]}. Keys of the map: #{map.keys}"
 		end
@@ -23,13 +23,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 		r = Js.parse_code(code)
 		ser = LightModels::Serialization.jsonize_obj(r)
 		#puts "Code <<<#{code}>>> -> #{JSON.pretty_generate(ser)}"
-		map = LightModels::Query.collect_values_with_count(ser)
+		map = LightModels::QuerySerialized.collect_values_with_count(ser)
 		assert_map(exp,map)
 	end
 
 	def test_info_the_root_is_parsed
 		code = "for(var i = 0; i < 10; i++) { var x = 5 + 5; }"
-		assert_code_map_to(code, {'i'=> 3, 0 => 1, 5 => 2, 10 => 1, '++' => 1, 'x' => 1})
+		assert_code_map_to(code, {'i'=> 3, 0 => 1, 5 => 2, 10 => 1, 'x' => 1})
 	end
 
 	def test_info_var_statement
@@ -44,7 +44,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def test_info_postfix
 		code = "i++;"
-		assert_code_map_to(code, {'i'=> 1, '++' => 1})
+		assert_code_map_to(code, {'i'=> 1})
 	end
 
 	def test_info_block
@@ -54,7 +54,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def test_snippet_1
 		code = "var lowercase = function(string){return isString(string) ? string.toLowerCase() : string;};"
-		assert_code_map_to(code, {'lowercase'=> 1, 'string' => 4, 'isString' => 1, 'toLowercase' => 1})
+		assert_code_map_to(code, {'lowercase'=> 1, 'string' => 4, 'isString' => 1, 'toLowerCase' => 1})
 	end
 
 	def test_snippet_2
@@ -72,8 +72,9 @@ class TestInfoExtraction < Test::Unit::TestCase
 		}
 		assert_code_map_to(code, {
 			'manualLowercase'=> 1, 'manualUppercase'=>1,
-			's' => 4, 'isString' => 2, 'replace' => 2, 
-			'A-Z'=>1, 'a-z'=>1,
+			's' => 8, 'isString' => 2, 'replace' => 2, 
+			'[A-Z]'=>1, '[a-z]'=>1,
+			'g'=>2, # this is the flag, it should be removed from the AST in the future
 			'ch'=>4, 'String'=>2,
 			'fromCharCode'=>2, 'charCodeAt'=>2, 
 			0=>2, 32=>2})

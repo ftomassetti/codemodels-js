@@ -89,7 +89,7 @@ def self.attribute_to_method(model_class,att)
 end
 
 def self.assign_ref_to_model(model,ref,value)
-	return unless value # we do not need to assign a nil...
+	return unless value!=nil # we do not need to assign a nil...
 	if ref.many
 		adder_method = :"add#{ref.name.capitalize}"
 		value.each {|el| model.send(adder_method,node_to_model(el))}
@@ -116,10 +116,11 @@ def self.assign_att_to_model(model,att,value)
 end
 
 def self.populate_attr(node,att,model)	
+	raise "Error: the attribute has no name" unless att.name
 	value = get_feature_value(node,att.name)
 	#puts "Value got for #{node.class} #{att} : #{value.class}"
 	# nil are ignored
-	model.send(:"#{att.name}=",value) if value
+	model.send(:"#{att.name}=",value) if value!=nil
 end
 
 def self.populate_ref(node,ref,model)
@@ -140,14 +141,53 @@ def self.populate_ref(node,ref,model)
 	end
 end
 
+def self.assign_attr_value(model,prop_name,value)
+	if value.is_a?(Java::JavaUtil::Collection)
+		capitalized_name = prop_name.proper_capitalize	
+		value.each do |el|
+			model.send(:"add#{capitalized_name}",el)
+		end
+	else
+		model.send(:"#{ref.name}=",value)
+	end
+end
+
+def self.assign_ref_value(model,prop_name,value)
+	if value.is_a?(Java::JavaUtil::Collection)
+		capitalized_name = prop_name.proper_capitalize	
+		value.each do |el|
+			#begin
+				model.send(:"add#{capitalized_name}",node_to_model(el))
+			#rescue Object=>e
+			#	raise "Assigning prop #{prop_name} to #{model}: #{e}"
+			#end
+		end
+	else
+		model.send(:"#{ref.name}=",node_to_model(value))
+	end
+end
+
 def self.node_to_model(node)
-	metaclass = get_corresponding_metaclass(node.class)
+	metaclass = get_corresponding_metaclass(node)
 	instance = metaclass.new
 	metaclass.ecore.eAllAttributes.each do |attr|
-		populate_attr(node,attr,instance)
+		unless additional_property?(node.class,attr.name)
+			populate_attr(node,attr,instance)
+		end
 	end
 	metaclass.ecore.eAllReferences.each do |ref|
-		populate_ref(node,ref,instance)
+		unless additional_property?(node.class,ref.name)
+			populate_ref(node,ref,instance)
+		end
+	end
+	# check for added properties
+	additional_properties(node.class).each do |prop_name,prop_data|
+		value = prop_data[:getter].call(node)
+		if Js.get_att_type(prop_data[:prop_type])
+			assign_attr_value(instance,prop_name.to_s,value)
+		else
+			assign_ref_value(instance,prop_name.to_s,value)
+		end
 	end
 	instance
 end

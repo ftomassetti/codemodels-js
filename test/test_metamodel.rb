@@ -17,14 +17,22 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_attr c,'declType',EString
 	end
 
+	def test_block
+		assert Js.const_defined? :Block
+		c = Js.const_get :Block
+
+		assert_all_attrs [],               c
+		assert_all_refs  ['contents'],    c
+
+		assert_ref c,'contents',JsNode,true
+	end
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression
 
-		assert_all_attrs ['operator'],     c
+		assert_all_attrs [],               c
 		assert_all_refs  ['left','right'], c
-		
-		assert_attr c,'operator',EString
 
 		assert_ref c,'left',JsNode
 		assert_ref c,'right',JsNode	
@@ -34,7 +42,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
 
-		assert_all_attrs ['operator'],     c
+		assert_all_attrs [],     c
 		assert_all_refs  ['left','right'], c
 
 		assert_equal 0,c.ecore.eAttributes.count
