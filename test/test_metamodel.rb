@@ -13,6 +13,14 @@ class TestInfoExtraction < Test::Unit::TestCase
 	# TODO ArrayComprehension
 	# TODO ArrayComprehensionLoop
 
+	def test_js_node
+		assert Js.const_defined? :JsNode
+		c = Js.const_get :JsNode
+
+		assert_all_attrs [], c
+		assert_all_refs  [], c
+	end
+
 	def test_array_literal
 		assert Js.const_defined? :ArrayLiteral
 		c = Js.const_get :ArrayLiteral
