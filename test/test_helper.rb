@@ -18,7 +18,7 @@ end
 
 def assert_all_refs(expected,c)
 	actual = c.ecore.eAllReferences
-	assert_equal expected.count,actual.count,"Expected #{expected.count} refs, found #{actual.count}"
+	assert_equal expected.count,actual.count,"Expected #{expected.count} refs, found #{actual.count}. They are #{actual.name}"
 	expected.each do |e|
 		assert actual.find {|a| a.name==e}, "Reference #{e} not found"	
 	end

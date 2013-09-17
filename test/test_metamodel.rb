@@ -25,8 +25,11 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert Js.const_defined? :BreakStatement
 		c = Js.const_get :BreakStatement
 
+		# TODO break label and break target maybe should be there
 		assert_all_attrs [], c
-		assert_all_refs  [], c		
+		assert_all_refs  ['breakLabel'], c		
+
+		assert_ref c,'breakLabel',Name
 	end
 
 	def test_array_literal

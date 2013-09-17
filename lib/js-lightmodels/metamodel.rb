@@ -368,6 +368,8 @@ module Js
 	ignore_prop(:ConditionalExpression, :questionMarkPosition)
 	ignore_prop(:ConditionalExpression, :colonPosition)
 
+	ignore_prop(:BreakStatement, :breakTarget)
+
   	wrap %w(
   		Symbol
   		Jump
@@ -400,6 +402,7 @@ module Js
   		VariableDeclaration
   		ConditionalExpression
   		RegExpLiteral
+  		BreakStatement
   	)
 
 	INFIX_OPERATORS = {
