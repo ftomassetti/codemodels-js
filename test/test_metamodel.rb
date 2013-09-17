@@ -21,6 +21,14 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_all_refs  [], c
 	end
 
+	def test_break
+		assert Js.const_defined? :BreakStatement
+		c = Js.const_get :BreakStatement
+
+		assert_all_attrs [], c
+		assert_all_refs  [], c		
+	end
+
 	def test_array_literal
 		assert Js.const_defined? :ArrayLiteral
 		c = Js.const_get :ArrayLiteral
