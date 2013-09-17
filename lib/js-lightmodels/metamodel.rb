@@ -341,6 +341,10 @@ module Js
 		@@additional_props[node_type_name][prop_name.to_sym]
 	end
 
+	ignore_prop(:ArrayLiteral, :skipCount)
+	ignore_prop(:ArrayLiteral, :destructuringLength)
+	ignore_prop(:ArrayLiteral, :size)
+
 	ignore_prop(:PropertyGet,:target)        # alias for left
 	ignore_prop(:PropertyGet,:property) 	 # alias for right	
 	ignore_prop(:InfixExpression, :operator) # we use a different subclass to discriminate

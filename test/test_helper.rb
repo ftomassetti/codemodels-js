@@ -10,7 +10,7 @@ end
 
 def assert_all_attrs(expected,c)
 	actual = c.ecore.eAllAttributes
-	assert_equal expected.count,actual.count,"Expected #{expected.count} attrs, found #{actual.count}"
+	assert_equal expected.count,actual.count,"Expected #{expected.count} attrs, found #{actual.count}. They are #{actual.name}"
 	expected.each do |e|
 		assert actual.find {|a| a.name==e}, "Attribute #{e} not found"	
 	end

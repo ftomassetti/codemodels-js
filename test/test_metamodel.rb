@@ -10,6 +10,19 @@ class TestInfoExtraction < Test::Unit::TestCase
 	include LightModels::Js
 	include RGen::ECore
 
+	# TODO ArrayComprehension
+	# TODO ArrayComprehensionLoop
+
+	def test_array_literal
+		assert Js.const_defined? :ArrayLiteral
+		c = Js.const_get :ArrayLiteral
+
+		assert_all_attrs [],              c
+		assert_all_refs  ['elements'],    c
+
+		assert_ref c,'elements',JsNode,true
+	end
+
 	def test_symbol
 		assert Js.const_defined? :Symbol
 		c = Js.const_get :Symbol
