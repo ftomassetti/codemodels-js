@@ -211,7 +211,9 @@ module Js
 			when '-'
 				'UnaryMinusOperator'				
 			when '+'
-				'UnaryPlusOperator'								
+				'UnaryPlusOperator'	
+			when 'typeof'							
+				'TypeOfOperator'
 			else
 				raise "Unknown unary operator: #{operator}"
 			end
@@ -514,6 +516,8 @@ module Js
 	end	
 	class UnaryPlusOperator < UnaryExpression
 	end	
+	class TypeOfOperator < UnaryExpression
+	end
 
 	add_prop(:Block,:contents,:JsNode,:many) do |node|
 		l = java.util.LinkedList.new
