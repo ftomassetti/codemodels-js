@@ -519,6 +519,7 @@ module Js
 		'instanceof' => 'InstanceOfInfixExpression',
 		'in' => 'InInfixExpression',
 		'%' => 'ModuleInfixExpression',
+		'^' => 'PowerInfixExpression'
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)
