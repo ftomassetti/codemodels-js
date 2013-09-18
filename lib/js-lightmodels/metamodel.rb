@@ -208,6 +208,10 @@ module Js
 				'BitwiseNotOperator'
 			when '!'
 				'NotOperator'
+			when '-'
+				'UnaryMinusOperator'				
+			when '+'
+				'UnaryPlusOperator'								
 			else
 				raise "Unknown unary operator: #{operator}"
 			end
@@ -501,6 +505,10 @@ module Js
 	end
 	class NotOperator < UnaryExpression
 	end
+	class UnaryMinusOperator < UnaryExpression
+	end	
+	class UnaryPlusOperator < UnaryExpression
+	end	
 
 	add_prop(:Block,:contents,:JsNode,:many) do |node|
 		l = java.util.LinkedList.new
