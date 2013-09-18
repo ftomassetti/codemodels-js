@@ -463,6 +463,8 @@ module Js
   		DoLoop
   		WhileLoop
   		NewExpression
+  		EmptyStatement
+  		EmptyExpression
   	)
 
 	INFIX_OPERATORS = {

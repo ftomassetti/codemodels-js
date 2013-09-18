@@ -108,4 +108,10 @@ class TestBasicParsing < Test::Unit::TestCase
 		assert_class CommaInfixExpression, model.expression
 	end		
 
+	def test_empty_stmt
+		code = ";"
+		model = Js.parse_code(code).statements[0]
+		assert_class EmptyStatement, model
+	end			
+
 end
