@@ -478,10 +478,11 @@ module Js
 		'&'  => 'BitAndInfixExpression',
 		'===' => 'IdentityInfixExpression',
 		'!==' => 'NotIdentityInfixExpression',
+		'!=' => 'NotEqualsInfixExpression',
 		'==' => 'EqualsInfixExpression',
 		'&&' => 'LogicAndInfixExpression',
 		'||' => 'LogicOrInfixExpression',
-		',' => 'CommaInfixExpression',
+		',' => 'CommaInfixExpression'
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)
