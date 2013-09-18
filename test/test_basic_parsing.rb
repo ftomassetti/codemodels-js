@@ -112,6 +112,28 @@ class TestBasicParsing < Test::Unit::TestCase
 		code = ";"
 		model = Js.parse_code(code).statements[0]
 		assert_class EmptyStatement, model
+	end		
+
+	def test_switch_stmt
+		code = %q{
+			switch (1) { 
+				case 2: 
+					3; 
+					break;
+				case 4: 
+					5; 
+					break;
+				default:
+					6;
+			}
+		}
+		model = Js.parse_code(code).statements[0]
+		assert_class SwitchStatement, model
+		assert_class NumberLiteral, model.expression
+		assert_equal 3, model.cases.count
+		assert_class ExpressionSwitchCase, model.cases[0]
+		assert_class ExpressionSwitchCase, model.cases[1]
+		assert_class DefaultSwitchCase, 	  model.cases[2]
 	end			
 
 end

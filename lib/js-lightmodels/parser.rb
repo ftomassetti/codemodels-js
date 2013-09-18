@@ -117,14 +117,14 @@ end
 
 def self.populate_attr(node,att,model)	
 	raise "Error: the attribute has no name" unless att.name
-	value = get_feature_value(node,att.name)
+	value = get_feature_value(node,att.name,model)
 	#puts "Value got for #{node.class} #{att} : #{value.class}"
 	# nil are ignored
 	model.send(:"#{att.name}=",value) if value!=nil
 end
 
 def self.populate_ref(node,ref,model)
-	value = get_feature_value(node,ref.name)
+	value = get_feature_value(node,ref.name,model)
 	if value
 		if value==node
 			puts "avoiding loop... #{ref.name}, class #{node.class}" 

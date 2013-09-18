@@ -197,4 +197,17 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'cases',SwitchCase,true		
 	end
 
+	def test_expression_switch_case
+		c = assert_metamodel :ExpressionSwitchCase, [], ['expression','statements']
+
+		assert_ref c,'expression',JsNode
+		assert_ref c,'statements',JsNode, true
+	end
+
+	def test_default_switch_case
+		c = assert_metamodel :DefaultSwitchCase, [], ['statements']
+
+		assert_ref c,'statements',JsNode, true
+	end	
+
 end

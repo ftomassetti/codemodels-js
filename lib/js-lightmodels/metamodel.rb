@@ -229,6 +229,13 @@ module Js
 				name='SimpleObjectProperty'
 			end
 		end
+		if name=='SwitchCase'
+			if node.expression
+				name='ExpressionSwitchCase'
+			else
+				name='DefaultSwitchCase'
+			end
+		end
 		Js.const_get(name)
 	end
 
@@ -296,13 +303,23 @@ module Js
 		nil
 	end
 
-	def self.get_feature_value(node,feat_name)
+	def self.get_feature_value(node,feat_name,model)
 		raise "Error: nil feat_name" unless feat_name
-		adapter = get_adapter(node.class,feat_name)		
+		#puts "Asking feature value for #{model.class} #{feat_name}"
+		adapter = get_adapter(model.class,feat_name)		
 		if adapter
-			#puts "Using adapter for #{node.class} #{feat_name}"
-			raise "Adapter method not registered for #{node.class} #{feat_name}" unless adapter[:adapter]
-			adapter[:adapter].call(node)
+			unless adapter[:adapter]
+				# ok, it was ignored, and later added...
+				# so call the getter specified when adding the property
+				node_type = simple_java_class_name(model.class).to_sym
+				prop_name = feat_name.to_sym
+				raise "Additional prop not found #{model.class}.#{prop_name}" unless @@additional_props[node_type][prop_name]
+				getter = @@additional_props[node_type][prop_name][:getter]
+				raise "Getter not found" unless getter
+				getter.call(node)
+			else			
+				adapter[:adapter].call(node)
+			end
 		else
 			get_feature_value_through_getter(node,feat_name)
 		end
@@ -343,6 +360,7 @@ module Js
 	end
 
 	def self.add_prop(node_type,prop_name,prop_type,multiplicity=:single,&getter)
+		raise "Getter not specified" unless getter
 		@@additional_props[node_type][prop_name] = {prop_type:prop_type,multiplicity:multiplicity,getter:getter}
 		c = Js.const_get(node_type.to_s)
 		raise "Error" unless c
@@ -406,6 +424,8 @@ module Js
 
 	ignore_prop(:SwitchStatement, :lp)
 	ignore_prop(:SwitchStatement, :rp)
+
+	ignore_prop(:SwitchCase, :expression) # we use it for ExpressionSwitchCase but not for DefaultSwitchCase
 
 	record_prop_adapter(:ObjectProperty,:name,JsNode) do |node|
 		node.left
@@ -531,6 +551,11 @@ module Js
 	class DeleteOperator < UnaryExpression
 	end
 
+	class ExpressionSwitchCase < SwitchCase
+	end
+	class DefaultSwitchCase < SwitchCase
+	end
+
 	add_prop(:Block,:contents,:JsNode,:many) do |node|
 		l = java.util.LinkedList.new
 		node.each do |el|
@@ -538,6 +563,10 @@ module Js
 		end
 		l
 	end
+
+	add_prop(:ExpressionSwitchCase,:expression,:JsNode,:single) do |node|
+		node.expression
+	end	
 
 	# add_prop(:ScriptNode,:statements,:JsNode,:many) do |node|
 	# 	# we disabled in general for scope but we re-enabled for ScriptNode
