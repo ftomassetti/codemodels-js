@@ -79,6 +79,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'condition',JsNode
 	end
 
+	def test_function_call
+		c = assert_metamodel :FunctionCall, [], ['target','arguments']
+
+		assert_ref c,'target',JsNode
+		assert_ref c,'arguments',JsNode, true
+	end
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression
@@ -103,6 +110,14 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 		assert_ref c,'body',JsNode
 	end	
+
+	def test_new_expression
+		c = assert_metamodel :NewExpression, [], ['initializer','target','arguments']
+
+		assert_ref c,'initializer',ObjectLiteral		
+		assert_ref c,'target',JsNode
+		assert_ref c,'arguments',JsNode, true
+	end
 
 	def test_property_get
 		assert Js.const_defined? :PropertyGet

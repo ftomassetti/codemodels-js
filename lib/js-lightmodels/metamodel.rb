@@ -428,6 +428,7 @@ module Js
   		ContinueStatement
   		DoLoop
   		WhileLoop
+  		NewExpression
   	)
 
 	INFIX_OPERATORS = {
