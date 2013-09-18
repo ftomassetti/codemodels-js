@@ -80,4 +80,43 @@ class TestInfoExtraction < Test::Unit::TestCase
 			0.0=>2, 32.0=>2})
 	end
 
+	def test_snippet_3
+		code = %q{
+			'use strict';
+
+				// Declare app level module which depends on filters, and services
+				angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives']).
+				  config(['$routeProvider', function($routeProvider) {
+				    $routeProvider.when('/aes', {template: 'partials/aes.html', controller: aesCtrl});
+				    $routeProvider.when('/about', {template: 'partials/about.html', controller: homeCtrl});
+				    //$routeProvider.when('/memorize', {template: 'partials/memorize.html', controller: memorizeCtrl});
+				    $routeProvider.when('/phrases', {template: 'partials/phrases.html', controller: phrasesCtrl});
+				    //$routeProvider.when('/about', {template: 'partials/about.html', controller: aboutCtrl});
+				    $routeProvider.otherwise({redirectTo: '/aes'});
+				  }]);
+		}
+		assert_code_map_to(code, {
+			'use strict' => 1,
+			'angular'=>1,
+			'module'=>1,
+			'myApp'=>1,
+			'myApp.filters'=>1,
+			'myApp.services'=>1,
+			'myApp.directives'=>1,
+			'config'=>1,
+			'$routeProvider' => 6,
+			'when' => 3,
+			'otherwise'=>1,
+			'/aes' =>2, 'partials/aes.html'=>1,
+			'/about' =>1, 'partials/about.html'=>1,
+			'/phrases' =>1, 'partials/phrases.html'=>1,
+			'template' => 3,
+			'controller' => 3,
+			'aesCtrl' => 1,
+			'homeCtrl' => 1,
+			'phrasesCtrl' => 1,
+			'redirectTo' => 1
+		})		
+	end
+
 end
