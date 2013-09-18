@@ -214,6 +214,8 @@ module Js
 				'UnaryPlusOperator'	
 			when 'typeof'							
 				'TypeOfOperator'
+			when 'delete'							
+				'DeleteOperator'				
 			else
 				raise "Unknown unary operator: #{operator}"
 			end
@@ -518,6 +520,8 @@ module Js
 	class UnaryPlusOperator < UnaryExpression
 	end	
 	class TypeOfOperator < UnaryExpression
+	end
+	class DeleteOperator < UnaryExpression
 	end
 
 	add_prop(:Block,:contents,:JsNode,:many) do |node|
