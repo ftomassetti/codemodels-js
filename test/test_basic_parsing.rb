@@ -59,6 +59,13 @@ class TestBasicParsing < Test::Unit::TestCase
 		assert_class IdentityInfixExpression, model.expression
 	end		
 
+	def test_not_identity_infix_expr
+		code = "1!==1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class NotIdentityInfixExpression, model.expression
+	end		
+
 	def test_logic_and_infix_expr
 		code = "1&&1"
 		model = Js.parse_code(code).statements[0]

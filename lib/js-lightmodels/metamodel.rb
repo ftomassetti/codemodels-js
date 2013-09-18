@@ -477,6 +477,7 @@ module Js
 		'|'  => 'BitOrInfixExpression',
 		'&'  => 'BitAndInfixExpression',
 		'===' => 'IdentityInfixExpression',
+		'!==' => 'NotIdentityInfixExpression',
 		'==' => 'EqualsInfixExpression',
 		'&&' => 'LogicAndInfixExpression',
 		'||' => 'LogicOrInfixExpression'
