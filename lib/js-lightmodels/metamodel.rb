@@ -473,7 +473,9 @@ module Js
 		'|'  => 'BitOrInfixExpression',
 		'&'  => 'BitAndInfixExpression',
 		'===' => 'IdentityInfixExpression',
-		'==' => 'EqualsInfixExpression'
+		'==' => 'EqualsInfixExpression',
+		'&&' => 'LogicAndInfixExpression',
+		'||' => 'LogicOrInfixExpression'
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)

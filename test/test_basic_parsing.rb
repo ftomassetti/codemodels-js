@@ -57,6 +57,20 @@ class TestBasicParsing < Test::Unit::TestCase
 		model = Js.parse_code(code).statements[0]
 		assert_class ExpressionStatement, model
 		assert_class IdentityInfixExpression, model.expression
-	end			
+	end		
+
+	def test_logic_and_infix_expr
+		code = "1&&1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class LogicAndInfixExpression, model.expression
+	end	
+
+	def test_logic_or_infix_expr
+		code = "1||1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class LogicOrInfixExpression, model.expression
+	end				
 
 end
