@@ -150,7 +150,7 @@ module Js
 				sourceName inStrictMode encodedSourceStart encodedSourceEnd
 				baseLineno endLineno functionCount regexpCount paramCount nextTempName
 				functions symbols childScopes encodedSource statement var const let
-				destructuring localName scope number operatorPosition
+				destructuring localName scope operatorPosition
 			 )
 
 			c.class_eval do
@@ -382,6 +382,8 @@ module Js
 	ignore_prop(:ContinueStatement, :target)
 
 	ignore_prop(:DoLoop, :whilePosition)
+
+	ignore_prop(:NumberLiteral, :value)
 
 	#ignore_prop(:Loop, :body)
 	#ignore_prop(:Scope, :statements)

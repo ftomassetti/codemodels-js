@@ -13,9 +13,9 @@ class TestInfoExtraction < Test::Unit::TestCase
 		#map.delete true
 		#map.delete false
 
-		assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map.keys}"
+		assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map}"
 		exp.each do |k,v|
-			assert_equal exp[k],map[k.to_s], "Expected #{k} to have #{exp[k]} instances, it has #{map[k.to_s]}. Keys of the map: #{map.keys}"
+			assert_equal exp[k],map[k], "Expected #{k} to have #{exp[k]} instances, it has #{map[k.to_s]}. Map: #{map}"
 		end
 	end
 
@@ -29,17 +29,17 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def test_info_the_root_is_parsed
 		code = "for(var i = 0; i < 10; i++) { var x = 5 + 5; }"
-		assert_code_map_to(code, {'i'=> 3, 0 => 1, 5 => 2, 10 => 1, 'x' => 1})
+		assert_code_map_to(code, {'i'=> 3, 0.0 => 1, 5.0 => 2, 10.0=> 1, 'x' => 1})
 	end
 
 	def test_info_var_statement
 		code = "var i = 0;"
-		assert_code_map_to(code, {'i'=> 1, 0 => 1})
+		assert_code_map_to(code, {'i'=> 1, 0.0 => 1})
 	end
 
 	def test_info_less
 		code = "i < 10;"
-		assert_code_map_to(code, {'i'=> 1, 10 => 1})
+		assert_code_map_to(code, {'i'=> 1, 10.0 => 1})
 	end
 
 	def test_info_postfix
@@ -49,7 +49,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def test_info_block
 		code = "{ var x = 5 + 5; }"
-		assert_code_map_to(code, {'x'=> 1, 5 => 2})		
+		assert_code_map_to(code, {'x'=> 1, 5.0 => 2})		
 	end
 
 	def test_snippet_1
@@ -77,7 +77,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 			'g'=>2, # this is the flag, it should be removed from the AST in the future
 			'ch'=>4, 'String'=>2,
 			'fromCharCode'=>2, 'charCodeAt'=>2, 
-			0=>2, 32=>2})
+			0.0=>2, 32.0=>2})
 	end
 
 end
