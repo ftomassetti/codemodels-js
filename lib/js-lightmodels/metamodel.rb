@@ -205,7 +205,9 @@ module Js
 			when '--'
 				node.prefix ? 'PrefixDecrement' : 'PostfixDecrement'
 			when '~'
-				'BitwiseNot'
+				'BitwiseNotOperator'
+			when '!'
+				'NotOperator'
 			else
 				raise "Unknown unary operator: #{operator}"
 			end
@@ -491,7 +493,9 @@ module Js
 	end
 	class PrefixDecrement < UnaryExpression
 	end
-	class BitwiseNot < UnaryExpression
+	class BitwiseNotOperator < UnaryExpression
+	end
+	class NotOperator < UnaryExpression
 	end
 
 	add_prop(:Block,:contents,:JsNode,:many) do |node|
