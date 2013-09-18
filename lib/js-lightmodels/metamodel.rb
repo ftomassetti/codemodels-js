@@ -282,6 +282,7 @@ module Js
 		adapter = get_adapter(node.class,feat_name)		
 		if adapter
 			#puts "Using adapter for #{node.class} #{feat_name}"
+			raise "Adapter method not registered for #{node.class} #{feat_name}" unless adapter[:adapter]
 			adapter[:adapter].call(node)
 		else
 			get_feature_value_through_getter(node,feat_name)
@@ -330,15 +331,19 @@ module Js
 		add_ref_or_att(c,prop_type.to_s,prop_name.to_s,node_type.to_s,multiplicity)
 	end
 
-	# TODO consider superclass
 	def self.additional_properties(node_class)
 		node_type_name = simple_java_class_name(node_class).to_sym		
-		@@additional_props[node_type_name]
+		ap = {}
+		ap = additional_properties(node_class.superclass) if node_class.superclass	
+		@@additional_props[node_type_name].each do |k,v|
+			ap[k] = v
+		end		
+		ap
 	end
 
 	def self.additional_property?(node_class,prop_name)
 		node_type_name = simple_java_class_name(node_class).to_sym		
-		@@additional_props[node_type_name][prop_name.to_sym]
+		additional_properties(node_class)[prop_name.to_sym]
 	end
 
 	ignore_prop(:ArrayLiteral, :skipCount)
@@ -376,6 +381,17 @@ module Js
 
 	ignore_prop(:ContinueStatement, :target)
 
+	ignore_prop(:DoLoop, :whilePosition)
+
+	#ignore_prop(:Loop, :body)
+	#ignore_prop(:Scope, :statements)
+
+	# We don't want it to extend Scope
+	class Loop < JsNode
+		contains_one_uni 'body',JsNode
+	end
+	MappedAstClasses[::Java::JavaClass.for_name("org.mozilla.javascript.ast.Loop")] = Loop
+
   	wrap %w(
   		Symbol
   		Jump
@@ -400,7 +416,6 @@ module Js
   		IfStatement
   		StringLiteral
   		ArrayLiteral
-  		Loop
   		ForLoop
   		ForInLoop
   		NumberLiteral
@@ -411,6 +426,8 @@ module Js
   		BreakStatement
   		CatchClause
   		ContinueStatement
+  		DoLoop
+  		WhileLoop
   	)
 
 	INFIX_OPERATORS = {
@@ -448,6 +465,11 @@ module Js
 		end
 		l
 	end
+
+	# add_prop(:ScriptNode,:statements,:JsNode,:many) do |node|
+	# 	# we disabled in general for scope but we re-enabled for ScriptNode
+	# 	node.statements
+	# end	
 
 end
 

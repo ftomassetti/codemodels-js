@@ -17,4 +17,18 @@ class TestBasicParsing < Test::Unit::TestCase
 		assert model.statements[0].is_a?(Scope)
 	end
 
+	def test_while_statements_empty
+		code = "while (true) {  }"
+		model = Js.parse_code(code).statements[0]
+		assert_class WhileLoop, model
+		assert_equal 0,model.body.statements.count
+	end
+
+	def test_while_statements_one_element
+		code = "while (true) { i++; }"
+		model = Js.parse_code(code).statements[0]
+		assert_class WhileLoop, model
+		assert_equal 1,model.body.statements.count
+	end
+
 end

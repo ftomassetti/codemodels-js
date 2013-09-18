@@ -13,6 +13,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 	# TODO ArrayComprehension
 	# TODO ArrayComprehensionLoop
 
+	def test_ast_root
+		c = assert_metamodel :AstRoot, [], ['statements']
+
+		assert_ref c, 'statements', JsNode, true
+	end
+
 	def test_array_literal
 		assert Js.const_defined? :ArrayLiteral
 		c = Js.const_get :ArrayLiteral
@@ -27,7 +33,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert Js.const_defined? :Block
 		c = Js.const_get :Block
 
-		assert_all_attrs [],               c
+		assert_all_attrs [],              c
 		assert_all_refs  ['contents'],    c
 
 		assert_ref c,'contents',JsNode,true
@@ -66,6 +72,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'label',Name
 	end
 
+	def test_do_loop
+		c = assert_metamodel :DoLoop, [], ['body','condition']
+
+		assert_ref c,'body',JsNode
+		assert_ref c,'condition',JsNode
+	end
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression
@@ -85,6 +98,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_all_refs  [], c
 	end
 
+	def test_loop
+		c = assert_metamodel :Loop, [], ['body']
+
+		assert_ref c,'body',JsNode
+	end	
+
 	def test_property_get
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
@@ -96,11 +115,24 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_equal 0,c.ecore.eReferences.count
 	end
 
+	def test_scope
+		c = assert_metamodel :Scope, [], ['statements']
+
+		assert_ref c,'statements',JsNode, true
+	end	
+
 	def test_symbol
 		assert Js.const_defined? :Symbol
 		c = Js.const_get :Symbol
 
 		assert_attr c,'declType',EString
+	end
+
+	def test_while_loop
+		c = assert_metamodel :WhileLoop, [], ['body','condition']
+
+		assert_ref c,'body',JsNode
+		assert_ref c,'condition',JsNode
 	end
 
 end

@@ -38,7 +38,8 @@ def assert_all_refs(expected,c)
 end
 
 def assert_ref(c,name,type,many=false)
-	ref = c.ecore.eAllReferences.find {|r| r.name==name}	
+	ref = c.ecore.eAllReferences.find {|r| r.name==name}
+	assert ref, "Reference '#{name}' not found"	
 	assert_equal type.ecore.name,ref.eType.name
 	assert_equal many, ref.many
 end
