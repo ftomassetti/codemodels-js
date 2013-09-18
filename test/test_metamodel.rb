@@ -52,6 +52,14 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'body',Block
 	end
 
+	def test_conditional_expression
+		c = assert_metamodel :ConditionalExpression, [], ['testExpression','trueExpression','falseExpression']
+
+		assert_ref c,'testExpression',JsNode
+		assert_ref c,'trueExpression',JsNode
+		assert_ref c,'falseExpression',JsNode
+	end
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression
