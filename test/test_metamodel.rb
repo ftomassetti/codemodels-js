@@ -190,4 +190,11 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'condition',JsNode
 	end
 
+	def test_switch_statement
+		c = assert_metamodel :SwitchStatement, [], ['expression','cases']
+
+		assert_ref c,'expression',JsNode
+		assert_ref c,'cases',SwitchCase,true		
+	end
+
 end

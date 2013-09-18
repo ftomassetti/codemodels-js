@@ -404,6 +404,9 @@ module Js
 
 	ignore_prop(:NumberLiteral, :value)
 
+	ignore_prop(:SwitchStatement, :lp)
+	ignore_prop(:SwitchStatement, :rp)
+
 	record_prop_adapter(:ObjectProperty,:name,JsNode) do |node|
 		node.left
 	end
@@ -472,6 +475,7 @@ module Js
   		ThrowStatement
   		TryStatement
   		SwitchStatement
+  		SwitchCase
   	)
 
 	INFIX_OPERATORS = {
