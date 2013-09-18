@@ -210,6 +210,15 @@ module Js
 				raise "Unknown unary operator: #{operator}"
 			end
 		end
+		if name=='ObjectProperty'
+			if node.getter?
+				name='GetObjectProperty'
+			elsif node.setter?
+				name='SetObjectProperty'
+			else
+				name='SimpleObjectProperty'
+			end
+		end
 		Js.const_get(name)
 	end
 
