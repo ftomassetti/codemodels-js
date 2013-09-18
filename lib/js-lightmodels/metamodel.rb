@@ -470,6 +470,7 @@ module Js
   		EmptyStatement
   		EmptyExpression
   		ThrowStatement
+  		TryStatement
   	)
 
 	INFIX_OPERATORS = {
