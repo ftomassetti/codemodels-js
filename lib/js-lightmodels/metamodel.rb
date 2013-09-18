@@ -471,6 +471,7 @@ module Js
   		EmptyExpression
   		ThrowStatement
   		TryStatement
+  		SwitchStatement
   	)
 
 	INFIX_OPERATORS = {
