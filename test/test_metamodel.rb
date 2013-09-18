@@ -125,6 +125,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_attr c,'number',EFloat
 	end
 
+	def test_object_literal
+		c = assert_metamodel :ObjectLiteral, [], ['elements']
+
+		assert_ref c,'elements',ObjectProperty,true
+	end	
+
 	def test_property_get
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
