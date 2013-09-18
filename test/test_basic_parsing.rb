@@ -31,4 +31,18 @@ class TestBasicParsing < Test::Unit::TestCase
 		assert_equal 1,model.body.statements.count
 	end
 
+	def test_bitwise_not_operator
+		code = "~1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class BitwiseNotOperator, model.expression
+	end
+
+	def test_not_operator
+		code = "!true"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class NotOperator, model.expression
+	end	
+
 end
