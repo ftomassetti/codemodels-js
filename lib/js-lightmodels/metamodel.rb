@@ -471,7 +471,9 @@ module Js
 		'<=' => 'LessEqualInfixExpression',
 		'>=' => 'MoreEqualInfixExpression',
 		'|'  => 'BitOrInfixExpression',
-		'&'  => 'BitAndInfixExpression'
+		'&'  => 'BitAndInfixExpression',
+		'===' => 'IdentityInfixExpression',
+		'==' => 'EqualsInfixExpression'
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)

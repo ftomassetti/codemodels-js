@@ -45,4 +45,18 @@ class TestBasicParsing < Test::Unit::TestCase
 		assert_class NotOperator, model.expression
 	end	
 
+	def test_equals_infix_expr
+		code = "1==1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class EqualsInfixExpression, model.expression
+	end	
+
+	def test_identity_infix_expr
+		code = "1===1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class IdentityInfixExpression, model.expression
+	end			
+
 end
