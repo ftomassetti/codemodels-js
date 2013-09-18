@@ -517,7 +517,8 @@ module Js
 		'||' => 'LogicOrInfixExpression',
 		',' => 'CommaInfixExpression',
 		'instanceof' => 'InstanceOfInfixExpression',
-		'in' => 'InInfixExpression'
+		'in' => 'InInfixExpression',
+		'%' => 'ModuleInfixExpression',
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)
