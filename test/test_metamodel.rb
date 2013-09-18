@@ -60,6 +60,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'falseExpression',JsNode
 	end
 
+	def test_continue_statement
+		c = assert_metamodel :ContinueStatement, [], ['label']
+
+		assert_ref c,'label',Name
+	end
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression

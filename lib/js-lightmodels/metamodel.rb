@@ -374,6 +374,8 @@ module Js
 	ignore_prop(:CatchClause, :rp)
 	ignore_prop(:CatchClause, :ifPosition)
 
+	ignore_prop(:ContinueStatement, :target)
+
   	wrap %w(
   		Symbol
   		Jump
@@ -408,6 +410,7 @@ module Js
   		RegExpLiteral
   		BreakStatement
   		CatchClause
+  		ContinueStatement
   	)
 
 	INFIX_OPERATORS = {
