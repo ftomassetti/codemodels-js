@@ -467,6 +467,7 @@ module Js
   		NewExpression
   		EmptyStatement
   		EmptyExpression
+  		ThrowStatement
   	)
 
 	INFIX_OPERATORS = {
