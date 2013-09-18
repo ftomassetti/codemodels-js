@@ -1,4 +1,17 @@
+require 'js-lightmodels'
+
 module TestHelper
+
+include LightModels
+
+def assert_metamodel(name,attrs,refs)
+	assert Js.const_defined?(name), "Metaclass '#{name}' not found"
+	c = Js.const_get name
+
+	assert_all_attrs attrs, c
+	assert_all_refs  refs, c	
+	c
+end
 
 def assert_class(expected_class,node)
 	assert node.class==expected_class, "Node expected to have class #{expected_class} instead it has class #{node.class}"

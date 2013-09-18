@@ -13,12 +13,24 @@ class TestInfoExtraction < Test::Unit::TestCase
 	# TODO ArrayComprehension
 	# TODO ArrayComprehensionLoop
 
-	def test_js_node
-		assert Js.const_defined? :JsNode
-		c = Js.const_get :JsNode
+	def test_array_literal
+		assert Js.const_defined? :ArrayLiteral
+		c = Js.const_get :ArrayLiteral
 
-		assert_all_attrs [], c
-		assert_all_refs  [], c
+		assert_all_attrs [],              c
+		assert_all_refs  ['elements'],    c
+
+		assert_ref c,'elements',JsNode,true
+	end
+
+	def test_block
+		assert Js.const_defined? :Block
+		c = Js.const_get :Block
+
+		assert_all_attrs [],               c
+		assert_all_refs  ['contents'],    c
+
+		assert_ref c,'contents',JsNode,true
 	end
 
 	def test_break
@@ -32,31 +44,12 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'breakLabel',Name
 	end
 
-	def test_array_literal
-		assert Js.const_defined? :ArrayLiteral
-		c = Js.const_get :ArrayLiteral
+	def test_catch_clause
+		c = assert_metamodel :CatchClause, [], ['varName', 'catchCondition','body']
 
-		assert_all_attrs [],              c
-		assert_all_refs  ['elements'],    c
-
-		assert_ref c,'elements',JsNode,true
-	end
-
-	def test_symbol
-		assert Js.const_defined? :Symbol
-		c = Js.const_get :Symbol
-
-		assert_attr c,'declType',EString
-	end
-
-	def test_block
-		assert Js.const_defined? :Block
-		c = Js.const_get :Block
-
-		assert_all_attrs [],               c
-		assert_all_refs  ['contents'],    c
-
-		assert_ref c,'contents',JsNode,true
+		assert_ref c,'varName',Name
+		assert_ref c,'catchCondition',JsNode
+		assert_ref c,'body',Block
 	end
 
 	def test_infix_expression
@@ -70,6 +63,14 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'right',JsNode	
 	end
 
+	def test_js_node
+		assert Js.const_defined? :JsNode
+		c = Js.const_get :JsNode
+
+		assert_all_attrs [], c
+		assert_all_refs  [], c
+	end
+
 	def test_property_get
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
@@ -79,6 +80,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 		assert_equal 0,c.ecore.eAttributes.count
 		assert_equal 0,c.ecore.eReferences.count
+	end
+
+	def test_symbol
+		assert Js.const_defined? :Symbol
+		c = Js.const_get :Symbol
+
+		assert_attr c,'declType',EString
 	end
 
 end

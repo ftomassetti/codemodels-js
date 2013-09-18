@@ -2,3 +2,5 @@ source 'https://rubygems.org'
 
 # Specify your gem's dependencies in js-lightmodels.gemspec
 gemspec
+
+gem 'lightmodels',      :github => 'ftomassetti/lightmodels'
