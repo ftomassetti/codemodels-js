@@ -92,6 +92,13 @@ class TestBasicParsing < Test::Unit::TestCase
 		model = Js.parse_code(code).statements[0]
 		assert_class ExpressionStatement, model
 		assert_class UnaryMinusOperator, model.expression
-	end			
+	end	
+
+	def test_comma_infix_expr
+		code = "1,2"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class CommaInfixExpression, model.expression
+	end		
 
 end

@@ -480,7 +480,8 @@ module Js
 		'!==' => 'NotIdentityInfixExpression',
 		'==' => 'EqualsInfixExpression',
 		'&&' => 'LogicAndInfixExpression',
-		'||' => 'LogicOrInfixExpression'
+		'||' => 'LogicOrInfixExpression',
+		',' => 'CommaInfixExpression',
 	}
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)
