@@ -385,6 +385,14 @@ module Js
 
 	ignore_prop(:NumberLiteral, :value)
 
+	record_prop_adapter(:ObjectProperty,:name,JsNode) do |node|
+		node.left
+	end
+
+	record_prop_adapter(:ObjectProperty,:value,JsNode) do |node|
+		node.right
+	end	
+
 	#ignore_prop(:Loop, :body)
 	#ignore_prop(:Scope, :statements)
 
@@ -393,6 +401,17 @@ module Js
 		contains_one_uni 'body',JsNode
 	end
 	MappedAstClasses[::Java::JavaClass.for_name("org.mozilla.javascript.ast.Loop")] = Loop
+
+	class ObjectProperty < JsNode # maybe it should be directly a MMBase
+		contains_one_uni 'name',JsNode
+		contains_one_uni 'value',JsNode
+	end
+	MappedAstClasses[::Java::JavaClass.for_name("org.mozilla.javascript.ast.ObjectProperty")] = ObjectProperty
+
+	class ObjectLiteral < JsNode
+		contains_many_uni 'elements',ObjectProperty
+	end
+	MappedAstClasses[::Java::JavaClass.for_name("org.mozilla.javascript.ast.ObjectLiteral")] = ObjectLiteral
 
   	wrap %w(
   		Symbol
@@ -408,9 +427,7 @@ module Js
   		ParenthesizedExpression
   		InfixExpression
   		PropertyGet
-  		Assignment
-  		ObjectLiteral
-  		ObjectProperty
+  		Assignment  		
   		KeywordLiteral
   		ReturnStatement
   		UnaryExpression
@@ -448,6 +465,13 @@ module Js
 	INFIX_OPERATORS.values.each do |io|
 		c = Class.new(InfixExpression)
 		Js.const_set(io,c)
+	end
+
+	class SimpleObjectProperty < ObjectProperty
+	end
+	class GetObjectProperty < ObjectProperty
+	end
+	class SetObjectProperty < ObjectProperty
 	end
 	
 	class PostfixIncrement < UnaryExpression

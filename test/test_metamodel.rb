@@ -86,6 +86,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'arguments',JsNode, true
 	end
 
+	def test_get_object_property
+		c = assert_metamodel :GetObjectProperty, [], ['name','value']
+
+		assert_ref c,'name',JsNode
+		assert_ref c,'value',JsNode
+	end		
+
 	def test_infix_expression
 		assert Js.const_defined? :InfixExpression
 		c = Js.const_get :InfixExpression
@@ -131,6 +138,13 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_ref c,'elements',ObjectProperty,true
 	end	
 
+	def test_object_property
+		c = assert_metamodel :ObjectProperty, [], ['name','value']
+
+		assert_ref c,'name',JsNode
+		assert_ref c,'value',JsNode
+	end	
+
 	def test_property_get
 		assert Js.const_defined? :PropertyGet
 		c = Js.const_get :PropertyGet
@@ -141,6 +155,20 @@ class TestInfoExtraction < Test::Unit::TestCase
 		assert_equal 0,c.ecore.eAttributes.count
 		assert_equal 0,c.ecore.eReferences.count
 	end
+
+	def test_set_object_property
+		c = assert_metamodel :SetObjectProperty, [], ['name','value']
+
+		assert_ref c,'name',JsNode
+		assert_ref c,'value',JsNode
+	end		
+
+	def test_simple_object_property
+		c = assert_metamodel :SimpleObjectProperty, [], ['name','value']
+
+		assert_ref c,'name',JsNode
+		assert_ref c,'value',JsNode
+	end		
 
 	def test_scope
 		c = assert_metamodel :Scope, [], ['statements']
