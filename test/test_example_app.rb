@@ -1,6 +1,3 @@
-require 'test/unit'
-require 'lightmodels'
-require 'js-lightmodels'
 require 'test_helper'
  
 class TestExampleApp < Test::Unit::TestCase
@@ -10,7 +7,7 @@ class TestExampleApp < Test::Unit::TestCase
 	include LightModels::Js
 
 	def setup
-		@root = Js.parse_file(relative_path('app.js'))
+		@root = Js.parse_file(relative_path('data/app.js'))
 	end
 
 	def test_root_is_ast_root

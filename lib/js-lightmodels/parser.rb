@@ -1,8 +1,8 @@
 require 'js-lightmodels/metamodel'
 require 'js-lightmodels/monkey_patching'
+require 'lightmodels'
 
 module LightModels
-
 module Js
 
 # TODO move some stuff to the lightmodels module
@@ -192,6 +192,13 @@ def self.node_to_model(node)
 	instance
 end
 
+class Parser < LightModels::Parser
+
+	def parse_code(code)
+		LightModels::Js.parse_code(code)
+	end
+
 end
 
+end
 end

@@ -1,6 +1,3 @@
-require 'test/unit'
-require 'lightmodels'
-require 'js-lightmodels'
 require 'test_helper'
  
 class TestInfoExtraction < Test::Unit::TestCase
