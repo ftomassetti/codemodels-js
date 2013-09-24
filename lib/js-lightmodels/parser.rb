@@ -185,12 +185,22 @@ def self.node_to_model(node,code)
 
 	instance.language = LANGUAGE
 	instance.source = LightModels::SourceInfo.new
+
+	bp = node.getAbsolutePosition
+	ep = node.getAbsolutePosition+node.length
+
+	class << instance.source
+		attr_accessor :code
+		def to_code
+			@code
+		end
+	end
+	instance.source.code = code[bp..ep]
+
 	instance.source.begin_pos = LightModels::Position.new
 	instance.source.begin_pos.line = node.lineno
 	instance.source.begin_pos.column = node.position+1
 	instance.source.end_pos = LightModels::Position.new	
-	bp = node.getAbsolutePosition
-	ep = node.getAbsolutePosition+node.length
 	instance.source.end_pos.line = node.lineno+newlines(code,bp,ep)-1
 	instance.source.end_pos.column = column_last_char(code,bp,ep)
 
