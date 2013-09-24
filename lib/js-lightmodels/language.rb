@@ -11,7 +11,8 @@ class JsLanguage < Language
 	end
 end
 
-LightModels.register_language JsLanguage.new
+LANGUAGE = JsLanguage.new
+LightModels.register_language LANGUAGE
 
 end
 end

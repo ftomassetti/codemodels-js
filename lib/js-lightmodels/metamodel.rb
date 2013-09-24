@@ -1,4 +1,5 @@
 require 'rgen/metamodel_builder'
+require 'lightmodels'
 
 # TODO move some stuff to the lightmodels module
 
@@ -240,6 +241,7 @@ module Js
 	end
 
 	class JsNode < RGen::MetamodelBuilder::MMBase
+		include LightModels::LightModelsNode
 	end
 
 	private

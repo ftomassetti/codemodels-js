@@ -170,6 +170,7 @@ end
 def self.node_to_model(node)
 	metaclass = get_corresponding_metaclass(node)
 	instance = metaclass.new
+	instance.language = LANGUAGE
 	metaclass.ecore.eAllAttributes.each do |attr|
 		unless additional_property?(node.class,attr.name)
 			populate_attr(node,attr,instance)
