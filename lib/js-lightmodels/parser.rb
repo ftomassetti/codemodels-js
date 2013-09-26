@@ -228,6 +228,15 @@ end # class Parser
 
 DefaultParser = Parser.new
 
+ExpressionParser = Parser.new
+
+class << ExpressionParser
+	def parse_code(code)
+		res = super("a=#{code};")
+		res.statements[0].expression.right
+	end
+end
+
 def self.parse_code(code)
 	DefaultParser.parse_code(code)
 end
