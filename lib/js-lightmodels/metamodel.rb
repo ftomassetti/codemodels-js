@@ -240,8 +240,7 @@ module Js
 		Js.const_get(name)
 	end
 
-	class JsNode < RGen::MetamodelBuilder::MMBase
-		include LightModels::LightModelsNode
+	class JsNode < ::LightModels::LightModelsAstNode
 	end
 
 	private
