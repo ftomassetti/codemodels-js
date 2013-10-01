@@ -1,4 +1,4 @@
-js-lightmodels
-==============
+codemodels-js
+=============
 
-Building lightmodels of Javascript files
+Building codemodels of Javascript files. See https://github.com/ftomassetti/codemodels

@@ -3,8 +3,8 @@ require 'test_helper'
 class TestBasicParsing < Test::Unit::TestCase
 
 	include TestHelper
-	include LightModels
-	include LightModels::Js
+	include CodeModels
+	include CodeModels::Js
 
 	def test_block
 		code = "{ var x = 5 + 5; }"

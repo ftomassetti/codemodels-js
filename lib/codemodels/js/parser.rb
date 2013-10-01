@@ -1,34 +1,10 @@
-require 'js-lightmodels/metamodel'
-require 'js-lightmodels/monkey_patching'
-require 'lightmodels'
+require 'codemodels'
+require 'codemodels/js/metamodel'
 
-module LightModels
+module CodeModels
 module Js
 
-# TODO move some stuff to the lightmodels module
-class ParsingError < Exception
- 	attr_reader :node
-
- 	def initialize(node,msg)
- 		@node = node
- 		@msg = msg
- 	end
-
- 	def to_s
- 		"#{@msg}, start line: #{@node.position.start_line}"
- 	end
-
-end
-
-class UnknownNodeType < ParsingError
-
- 	def initialize(node,where=nil)
- 		super(node,"UnknownNodeType: type=#{node.node_type.name} , where: #{where}")
- 	end
-
-end
-
-class Parser < LightModels::Parser
+class Parser < CodeModels::Parser
 
 	attr_accessor :skip_unknown_node
 
@@ -56,15 +32,15 @@ class Parser < LightModels::Parser
 	private
 
 	def adapter_specific_class(model_class,ref)
-		return nil unless LightModels::Js::ParsingAdapters[model_class]
-		LightModels::Js::ParsingAdapters[model_class][ref.name]
+		return nil unless CodeModels::Js::ParsingAdapters[model_class]
+		CodeModels::Js::ParsingAdapters[model_class][ref.name]
 	end
 
-	# TODO remove code below, moved to LightModels
+	# TODO remove code below, moved to CodeModels
 
 	def adapter(model_class,ref)
-		if LightModels::Js::ParsingAdapters[model_class] && LightModels::Js::ParsingAdapters[model_class][ref.name]
-			LightModels::Js::ParsingAdapters[model_class][ref.name]
+		if CodeModels::Js::ParsingAdapters[model_class] && CodeModels::Js::ParsingAdapters[model_class][ref.name]
+			CodeModels::Js::ParsingAdapters[model_class][ref.name]
 		else
 			if model_class.superclass!=Object
 				adapter(model_class.superclass,ref) 
@@ -182,7 +158,7 @@ class Parser < LightModels::Parser
 		instance = metaclass.new
 
 		instance.language = LANGUAGE
-		instance.source = LightModels::SourceInfo.new
+		instance.source = CodeModels::SourceInfo.new
 
 		bp = node.getAbsolutePosition
 		ep = node.getAbsolutePosition+node.length
@@ -195,10 +171,10 @@ class Parser < LightModels::Parser
 		end
 		instance.source.code = code[bp..ep]
 
-		instance.source.begin_pos = LightModels::Position.new
+		instance.source.begin_pos = CodeModels::Position.new
 		instance.source.begin_pos.line = node.lineno
 		instance.source.begin_pos.column = node.position+1
-		instance.source.end_pos = LightModels::Position.new	
+		instance.source.end_pos = CodeModels::Position.new	
 		instance.source.end_pos.line = node.lineno+newlines(code,bp,ep)-1
 		instance.source.end_pos.column = column_last_char(code,bp,ep)
 

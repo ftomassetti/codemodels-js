@@ -1,7 +1,0 @@
-require 'jars/js.jar'
-
-require 'js-lightmodels/monkey_patching'
-require 'js-lightmodels/metamodel'
-require 'js-lightmodels/parser'
-require 'js-lightmodels/model_building'
-require 'js-lightmodels/language'

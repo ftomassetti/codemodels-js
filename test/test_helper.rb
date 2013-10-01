@@ -4,12 +4,12 @@ SimpleCov.start do
 end
 
 require 'test/unit'
-require 'js-lightmodels'
-require 'lightmodels'
+require 'codemodels'
+require 'codemodels/js'
 
 module TestHelper
 
-include LightModels
+include CodeModels
 
 def assert_metamodel(name,attrs,refs)
 	assert Js.const_defined?(name), "Metaclass '#{name}' not found"

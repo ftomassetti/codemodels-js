@@ -1,9 +1,9 @@
 require 'rgen/metamodel_builder'
-require 'lightmodels'
+require 'codemodels'
 
 # TODO move some stuff to the lightmodels module
 
-module LightModels
+module CodeModels
 
 module Js
 
@@ -156,7 +156,7 @@ module Js
 
 			c.class_eval do
 				ast_class.java_class.declared_instance_methods.select { |m| Js.getter?(m) }.each do |m|
-					prop_name = LightModels::Js.property_name(m)
+					prop_name = CodeModels::Js.property_name(m)
 					unless to_ignore.include?(prop_name)
 						if PROP_ADAPTERS[ast_class.simple_name.to_sym][prop_name.to_sym]	
 							#puts "Adapting #{ast_class.simple_name} #{prop_name}"					
@@ -170,10 +170,10 @@ module Js
 							# the type is complex (-> reference)
 							contains_one_uni prop_name, MappedAstClasses[m.return_type]
 						elsif JavaCollectionTypes.include?(m.return_type)							
-							type_name = LightModels::Js.get_generic_param_name(m.to_generic_string)
-							LightModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
+							type_name = CodeModels::Js.get_generic_param_name(m.to_generic_string)
+							CodeModels::Js.add_many_ref_or_att(c,type_name,prop_name,ast_name)
 						elsif m.return_type.array?
-							LightModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
+							CodeModels::Js.add_many_ref_or_att(c,m.return_type.component_type.name,prop_name,ast_name)
 						elsif Js.is_base_class?(m.return_type.name)
 							#puts "#{ast_class.simple_name} #{prop_name} is base type"		
 							contains_one_uni prop_name, JsNode
@@ -240,7 +240,7 @@ module Js
 		Js.const_get(name)
 	end
 
-	class JsNode < ::LightModels::LightModelsAstNode
+	class JsNode < ::CodeModels::CodeModelsAstNode
 	end
 
 	private

@@ -3,7 +3,7 @@ require 'test_helper'
 class TestInfoExtraction < Test::Unit::TestCase
 
 	include TestHelper
-	include LightModels
+	include CodeModels
 
 	def assert_map(exp,map)
 		# ignore boolean values...

@@ -3,14 +3,14 @@ require 'test_helper'
 class TestBasicNodeProperties < Test::Unit::TestCase
 
 	include TestHelper
-	include LightModels
-	include LightModels::Js
+	include CodeModels
+	include CodeModels::Js
 
 	def test_node_has_expected_basic_properties
 		r = Js.parse_code("i < 10;")
 		assert r.respond_to?(:source)
 		assert r.respond_to?(:language)
-		assert_equal LightModels::Js::LANGUAGE,r.language
+		assert_equal CodeModels::Js::LANGUAGE,r.language
 	end	
 
 	def test_node_has_expected_basic_position

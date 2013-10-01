@@ -3,8 +3,8 @@ require 'test_helper'
 class TestExampleApp < Test::Unit::TestCase
 
 	include TestHelper
-	include LightModels
-	include LightModels::Js
+	include CodeModels
+	include CodeModels::Js
 
 	def setup
 		@root = Js.parse_file(relative_path('data/app.js'))

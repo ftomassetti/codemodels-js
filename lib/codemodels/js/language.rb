@@ -1,18 +1,18 @@
-require 'lightmodels'
+require 'codemodels'
 
-module LightModels
+module CodeModels
 module Js
 
 class JsLanguage < Language
 	def initialize
 		super('Javascript')
 		@extensions << 'js'
-		@parser = LightModels::Js::Parser.new
+		@parser = CodeModels::Js::Parser.new
 	end
 end
 
 LANGUAGE = JsLanguage.new
-LightModels.register_language LANGUAGE
+CodeModels.register_language LANGUAGE
 
 end
 end

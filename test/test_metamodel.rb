@@ -3,8 +3,8 @@ require 'test_helper'
 class TestInfoExtraction < Test::Unit::TestCase
 
 	include TestHelper
-	include LightModels
-	include LightModels::Js
+	include CodeModels
+	include CodeModels::Js
 	include RGen::ECore
 
 	# TODO ArrayComprehension
