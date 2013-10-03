@@ -171,12 +171,8 @@ class Parser < CodeModels::Parser
 		end
 		instance.source.code = code[bp..ep]
 
-		instance.source.begin_pos = CodeModels::Position.new
-		instance.source.begin_pos.line = node.lineno
-		instance.source.begin_pos.column = node.position+1
-		instance.source.end_pos = CodeModels::Position.new	
-		instance.source.end_pos.line = node.lineno+newlines(code,bp,ep)-1
-		instance.source.end_pos.column = column_last_char(code,bp,ep)
+		instance.source.set_begin_point line: node.lineno, column: node.position+1
+		instance.source.set_end_point line: node.lineno+newlines(code,bp,ep)-1, column: column_last_char(code,bp,ep)
 
 		metaclass.ecore.eAllAttributes.each do |attr|
 			unless Js.additional_property?(node.class,attr.name)
