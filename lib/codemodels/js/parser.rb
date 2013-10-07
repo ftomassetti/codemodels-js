@@ -205,7 +205,9 @@ ExpressionParser = Parser.new
 class << ExpressionParser
 	def parse_code(code)
 		res = super("a=#{code};")
-		res.statements[0].expression.right
+		root = res.statements[0].expression.right
+		root.eContainer = nil
+		root
 	end
 end
 
