@@ -14,7 +14,7 @@ class Parser < CodeModels::Parser
 	end
 
 	def parse_code(code,filename='<code>')
-		artifact = FileArtifact.new(filename)
+		artifact = FileArtifact.new(filename,code)
 		parse_artifact(code,artifact)
 	end
 
