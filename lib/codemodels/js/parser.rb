@@ -197,7 +197,7 @@ class Parser < CodeModels::Parser
 			if Js.get_att_type(prop_data[:prop_type])
 				assign_attr_value(instance,prop_name.to_s,value)
 			else
-				assign_ref_value(instance,prop_name.to_s,value,code,artifactgit co)
+				assign_ref_value(instance,prop_name.to_s,value,code,artifact)
 			end
 		end
 		instance
