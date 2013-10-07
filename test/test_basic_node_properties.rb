@@ -37,9 +37,9 @@ class TestBasicNodeProperties < Test::Unit::TestCase
 		assert_equal 1,r.source.position.end_point.column
 	end	
 
-	def test_node_to_source
+	def test_node_code
 		r = Js.parse_code("{\ni < 10;\n}")
-		assert_equal "{\ni < 10;\n}",r.source.to_code
+		assert_equal "{\ni < 10;\n}",r.source.code
 	end	
 
 end
