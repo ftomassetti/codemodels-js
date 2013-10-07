@@ -14,19 +14,25 @@ class Parser < CodeModels::Parser
 	end
 
 	def parse_code(code,filename='<code>')
+		artifact = FileArtifact.new(filename)
+		parse_artifact(code,artifact)
+	end
+
+	def parse_artifact(code,artifact)
 		java_import 'java.io.StringReader'
 		java_import 'org.mozilla.javascript.CompilerEnvirons'
 		rhino_parser = (java_import 'org.mozilla.javascript.Parser')[0]
 		env = CompilerEnvirons.new
 		parser = rhino_parser.new(env)
 		reader = StringReader.new(code)
-
+		filename = '<code>'
+		filename = artifact.filename if artifact.respond_to?(:filename)
 		tree = parser.parse(reader, filename, 1)
-		tree_to_model(tree,code)
+		tree_to_model(tree,code,artifact)		
 	end
 
-	def tree_to_model(tree,code)
-		node_to_model(tree,code)
+	def tree_to_model(tree,code,artifact)
+		node_to_model(tree,code,artifact)
 	end
 
 	private
@@ -64,15 +70,15 @@ class Parser < CodeModels::Parser
 		s.to_sym
 	end
 
-	def assign_ref_to_model(model,ref,value,code)
+	def assign_ref_to_model(model,ref,value,code,artifact)
 		return unless value!=nil # we do not need to assign a nil...
 		if ref.many
 			adder_method = :"add#{ref.name.capitalize}"
-			value.each {|el| model.send(adder_method,node_to_model(el,code))}
+			value.each {|el| model.send(adder_method,node_to_model(el,code,artifact))}
 		else
 			setter_method = :"#{ref.name}="
 			raise "Trying to assign an array to a single property. Class #{model.class}, property #{ref.name}" if value.is_a?(::Array)
-			model.send(setter_method,node_to_model(value,code))
+			model.send(setter_method,node_to_model(value,code,artifact))
 		end
 	rescue Object => e
 		puts "Problem while assigning ref #{ref.name} (many? #{ref.many}) to #{model.class}. Value: #{value.class}"
@@ -97,7 +103,7 @@ class Parser < CodeModels::Parser
 		model.send(:"#{att.name}=",value) if value!=nil
 	end
 
-	def populate_ref(node,ref,model,code)
+	def populate_ref(node,ref,model,code,artifact)
 		value = Js.get_feature_value(node,ref.name,model)
 		if value
 			if value==node
@@ -107,10 +113,10 @@ class Parser < CodeModels::Parser
 			if value.is_a?(Java::JavaUtil::Collection)
 				capitalized_name = ref.name.proper_capitalize	
 				value.each do |el|
-					model.send(:"add#{capitalized_name}",node_to_model(el,code))
+					model.send(:"add#{capitalized_name}",node_to_model(el,code,artifact))
 				end
 			else
-				model.send(:"#{ref.name}=",node_to_model(value,code))
+				model.send(:"#{ref.name}=",node_to_model(value,code,artifact))
 			end
 		end
 	end
@@ -126,18 +132,18 @@ class Parser < CodeModels::Parser
 		end
 	end
 
-	def assign_ref_value(model,prop_name,value,code)
+	def assign_ref_value(model,prop_name,value,code,artifact)
 		if value.is_a?(Java::JavaUtil::Collection)
 			capitalized_name = prop_name.proper_capitalize	
 			value.each do |el|
 				#begin
-					model.send(:"add#{capitalized_name}",node_to_model(el,code))
+					model.send(:"add#{capitalized_name}",node_to_model(el,code,artifact))
 				#rescue Object=>e
 				#	raise "Assigning prop #{prop_name} to #{model}: #{e}"
 				#end
 			end
 		else
-			model.send(:"#{ref.name}=",node_to_model(value,code))
+			model.send(:"#{ref.name}=",node_to_model(value,code,artifact))
 		end
 	end
 
@@ -153,7 +159,7 @@ class Parser < CodeModels::Parser
 		last_line.length
 	end
 
-	def node_to_model(node,code)
+	def node_to_model(node,code,artifact)
 		metaclass = Js.get_corresponding_metaclass(node)
 		instance = metaclass.new
 
@@ -169,6 +175,7 @@ class Parser < CodeModels::Parser
 				@code
 			end
 		end
+		instance.source.artifact = artifact
 		instance.source.code = code[bp..ep]
 
 		instance.source.begin_point = { line: node.lineno, column: node.position+1 }
@@ -181,7 +188,7 @@ class Parser < CodeModels::Parser
 		end
 		metaclass.ecore.eAllReferences.each do |ref|
 			unless Js.additional_property?(node.class,ref.name)
-				populate_ref(node,ref,instance,code)
+				populate_ref(node,ref,instance,code,artifact)
 			end
 		end
 		# check for added properties
@@ -190,7 +197,7 @@ class Parser < CodeModels::Parser
 			if Js.get_att_type(prop_data[:prop_type])
 				assign_attr_value(instance,prop_name.to_s,value)
 			else
-				assign_ref_value(instance,prop_name.to_s,value,code)
+				assign_ref_value(instance,prop_name.to_s,value,code,artifact)
 			end
 		end
 		instance
