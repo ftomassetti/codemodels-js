@@ -15,10 +15,11 @@ class Parser < CodeModels::Parser
 
 	def parse_code(code,filename='<code>')
 		artifact = FileArtifact.new(filename,code)
-		parse_artifact(code,artifact)
+		parse_artifact(artifact)
 	end
 
-	def parse_artifact(code,artifact)
+	def parse_artifact(artifact)
+		code = artifact.code
 		java_import 'java.io.StringReader'
 		java_import 'org.mozilla.javascript.CompilerEnvirons'
 		rhino_parser = (java_import 'org.mozilla.javascript.Parser')[0]
