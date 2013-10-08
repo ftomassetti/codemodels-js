@@ -210,12 +210,15 @@ DefaultParser = Parser.new
 ExpressionParser = Parser.new
 
 class << ExpressionParser
-	def parse_code(code)
-		res = super("a=#{code};")
-		root = res.statements[0].expression.right
-		#root.eContainer = nil
-		root
+	def parse_code(code,filename='<code>')
+		parse_artifact(code,FileArtifact.new(filename))
 	end
+
+	def parse_artifact(code,artifact)
+		res = super("a=#{code};",artifact)
+		root = res.statements[0].expression.right
+		root
+	end		
 end
 
 def self.parse_code(code)
