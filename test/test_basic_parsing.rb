@@ -68,6 +68,19 @@ class TestBasicParsing < Test::Unit::TestCase
 		model = Js.parse_code(code).statements[0]
 		assert_class ExpressionStatement, model
 		assert_class NotEqualsInfixExpression, model.expression
+	end	
+
+	def test_sub_expression_position
+		code = "1!=1"
+		model = Js.parse_code(code).statements[0]
+		assert_class ExpressionStatement, model
+		assert_class NotEqualsInfixExpression, model.expression
+		assert_class Js::NumberLiteral, model.expression.left
+		assert_class Js::NumberLiteral, model.expression.right
+		assert_equal SourcePoint.new(1,1),model.expression.left.source.position.begin_point
+		assert_equal SourcePoint.new(1,1),model.expression.left.source.position.end_point
+		assert_equal SourcePoint.new(1,4),model.expression.right.source.position.begin_point
+		assert_equal SourcePoint.new(1,4),model.expression.right.source.position.end_point
 	end		
 
 	def test_logic_and_infix_expr
