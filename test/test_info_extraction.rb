@@ -115,4 +115,28 @@ class TestInfoExtraction < Test::Unit::TestCase
 		})		
 	end
 
+	def test_no_extraneous_values
+		code = IO.read('test/data/app.js')
+		r = Js.parse_code(code)
+		r.traverse(:also_foreign) do |node|			
+			node.collect_values_with_count.each do |value,count|
+				value_s = value.to_s
+				value_s = value_s[0..-3] if value_s.end_with?('.0')
+				node_code = node.source.code
+				unless node_code.include?(value_s)
+					node.class.ecore.eAllAttributes.each do |a|
+						if a.many
+							puts "Attribute #{a.name}" if node.send(:"#{a.name}").include?(value)
+						else
+							puts "Attribute #{a.name}" if node.send(:"#{a.name}")==value
+						end
+					end
+
+					fail("Value '#{value}' expected in #{node}. Artifact: #{node.source.artifact}, abspos: #{node.source.position(:absolute)}, code: '#{node_code}'")
+				end
+			end
+		end
+	end
+
+
 end

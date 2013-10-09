@@ -428,6 +428,9 @@ module Js
 
 	ignore_prop(:SwitchCase, :expression) # we use it for ExpressionSwitchCase but not for DefaultSwitchCase
 
+	ignore_prop(:ElementGet, :lb)
+	ignore_prop(:ElementGet, :rb)
+
 	record_prop_adapter(:ObjectProperty,:name,JsNode) do |node|
 		node.left
 	end
