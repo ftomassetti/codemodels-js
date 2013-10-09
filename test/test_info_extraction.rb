@@ -6,10 +6,6 @@ class TestInfoExtraction < Test::Unit::TestCase
 	include CodeModels
 
 	def assert_map(exp,map)
-		# ignore boolean values...
-		#map.delete true
-		#map.delete false
-
 		assert_equal exp.count,map.count, "Expected to have keys: #{exp.keys}, it has #{map}"
 		exp.each do |k,v|
 			assert_equal exp[k],map[k], "Expected #{k} to have #{exp[k]} instances, it has #{map[k.to_s]}. Map: #{map}"
@@ -18,7 +14,6 @@ class TestInfoExtraction < Test::Unit::TestCase
 
 	def assert_code_map_to(code,exp)
 		r = Js.parse_code(code)
-		#puts "Code <<<#{code}>>> -> #{JSON.pretty_generate(r.to_json)}"
 		map = r.values_map
 		assert_map(exp,map)
 	end
