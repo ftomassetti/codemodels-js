@@ -42,4 +42,11 @@ class TestBasicNodeProperties < Test::Unit::TestCase
 		assert_equal "{\ni < 10;\n}",r.source.code
 	end	
 
+	def test_artifact_final_host_is_set_correctly_for_all
+		r = Js.parse_file('test/data/app.js')
+		r.traverse(:also_foreign) do |n|
+			assert_equal 'test/data/app.js',n.source.artifact.final_host.filename, "Node with wrong final_host: #{n}"
+		end
+	end
+
 end
