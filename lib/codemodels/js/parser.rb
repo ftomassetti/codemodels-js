@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'codemodels'
 require 'codemodels/js/metamodel'
 
@@ -8,27 +9,16 @@ class Parser < CodeModels::Parser
 
 	attr_accessor :skip_unknown_node
 
-	def parse_file(path)
-		content = IO.read(path)
-		self.parse_code(content,path)
-	end
-
-	def parse_code(code,filename='<code>')
-		artifact = FileArtifact.new(filename,code)
-		parse_artifact(artifact)
-	end
-
-	def parse_artifact(artifact)
+	def internal_parse_artifact(artifact)
 		code = artifact.code
+		name = artifact.name
 		java_import 'java.io.StringReader'
 		java_import 'org.mozilla.javascript.CompilerEnvirons'
 		rhino_parser = (java_import 'org.mozilla.javascript.Parser')[0]
 		env = CompilerEnvirons.new
 		parser = rhino_parser.new(env)
 		reader = StringReader.new(code)
-		filename = '<code>'
-		filename = artifact.filename if artifact.respond_to?(:filename)
-		tree = parser.parse(reader, filename, 1)
+		tree = parser.parse(reader, name, 1)
 		tree_to_model(tree,code,artifact)		
 	end
 
@@ -210,7 +200,7 @@ class << ExpressionParser
 	end
 
 	def parse_artifact(artifact)
-		code = "a=#{artifact.code};"
+		code = "a=#{artifact.code};".encode(internal_encoding)
 		java_import 'java.io.StringReader'
 		java_import 'org.mozilla.javascript.CompilerEnvirons'
 		rhino_parser = (java_import 'org.mozilla.javascript.Parser')[0]
@@ -229,8 +219,8 @@ def self.parse_code(code)
 	DefaultParser.parse_code(code)
 end
 
-def self.parse_file(path)
-	DefaultParser.parse_file(path)
+def self.parse_file(path,encoding=nil)
+	DefaultParser.parse_file(path,encoding)
 end
 
 end

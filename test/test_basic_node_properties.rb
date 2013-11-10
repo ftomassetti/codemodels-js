@@ -7,14 +7,14 @@ class TestBasicNodeProperties < Test::Unit::TestCase
 	include CodeModels::Js
 
 	def test_node_has_expected_basic_properties
-		r = Js.parse_code("i < 10;")
+		r = parse_code("i < 10;")
 		assert r.respond_to?(:source)
 		assert r.respond_to?(:language)
 		assert_equal CodeModels::Js::LANGUAGE,r.language
 	end	
 
 	def test_node_has_expected_basic_position
-		r = Js.parse_code("i < 10;")
+		r = parse_code("i < 10;")
 		assert_not_nil r.source
 		assert_not_nil r.source.position,"Source of #{r.class} has not the position"
 		assert_not_nil r.source.position.begin_point
@@ -26,7 +26,7 @@ class TestBasicNodeProperties < Test::Unit::TestCase
 	end	
 
 	def test_node_has_expected_multiline_position
-		r = Js.parse_code("{\ni < 10;\n}")
+		r = parse_code("{\ni < 10;\n}")
 		assert_not_nil r.source
 		assert_not_nil r.source.position
 		assert_not_nil r.source.position.begin_point
@@ -38,7 +38,7 @@ class TestBasicNodeProperties < Test::Unit::TestCase
 	end	
 
 	def test_node_code
-		r = Js.parse_code("{\ni < 10;\n}")
+		r = parse_code("{\ni < 10;\n}")
 		assert_equal "{\ni < 10;\n}",r.source.code
 	end	
 

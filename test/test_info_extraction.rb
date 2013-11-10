@@ -1,3 +1,5 @@
+# encoding: UTF-8
+#Encoding.default_internal = Encoding::UTF_8
 require 'test_helper'
  
 class TestInfoExtraction < Test::Unit::TestCase
@@ -13,7 +15,7 @@ class TestInfoExtraction < Test::Unit::TestCase
 	end
 
 	def assert_code_map_to(code,exp)
-		r = Js.parse_code(code)
+		r = parse_code(code)
 		map = r.values_map
 		assert_map(exp,map)
 	end
@@ -110,14 +112,44 @@ class TestInfoExtraction < Test::Unit::TestCase
 		})		
 	end
 
-	def test_no_extraneous_values
-		code = IO.read('test/data/app.js')
-		r = Js.parse_code(code)
+#	def test_encoding_is_supported
+#		r = Js.parse_file('test/data/app.js','UTF-8')
+#		
+#		r.traverse(:also_foreign) do |node|			
+#		end
+#	end
+
+	def test_no_extraneous_values_simple_encoding
+		#code = IO.read('test/data/app.js',{ :encoding => 'UTF-8', :mode => 'rb'})
+		r = Js.parse_file('test/data/app_clean.js','UTF-8')
 		r.traverse(:also_foreign) do |node|			
 			node.collect_values_with_count.each do |value,count|
-				value_s = value.to_s
+				value_s = value.to_s.encode(Parser::DEFAULT_INTERNAL_ENCODING)
 				value_s = value_s[0..-3] if value_s.end_with?('.0')
-				node_code = node.source.code
+				node_code = node.source.code.encode(Parser::DEFAULT_INTERNAL_ENCODING)
+				unless node_code.include?(value_s)
+					node.class.ecore.eAllAttributes.each do |a|
+						if a.many
+							puts "Attribute #{a.name}" if node.send(:"#{a.name}").include?(value)
+						else
+							puts "Attribute #{a.name}" if node.send(:"#{a.name}")==value
+						end
+					end
+
+					fail("Value '#{value}' expected in #{node}. Artifact: #{node.source.artifact}, abspos: #{node.source.position(:absolute)}, code: '#{node_code}'")
+				end
+			end
+		end
+	end
+
+	def test_no_extraneous_values
+		#code = IO.read('test/data/app.js',{ :encoding => 'UTF-8', :mode => 'rb'})
+		r = Js.parse_file('test/data/app.js','UTF-8')
+		r.traverse(:also_foreign) do |node|			
+			node.collect_values_with_count.each do |value,count|
+				value_s = value.to_s.encode(Parser::DEFAULT_INTERNAL_ENCODING)
+				value_s = value_s[0..-3] if value_s.end_with?('.0')
+				node_code = node.source.code.encode(Parser::DEFAULT_INTERNAL_ENCODING)
 				unless node_code.include?(value_s)
 					node.class.ecore.eAllAttributes.each do |a|
 						if a.many

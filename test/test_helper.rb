@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'simplecov'
 SimpleCov.start do
 	add_filter "/test/"	
@@ -10,6 +11,10 @@ require 'codemodels/js'
 module TestHelper
 
 include CodeModels
+
+def parse_code(code)
+	Js.parse_code(code.encode(Parser::DEFAULT_INTERNAL_ENCODING))
+end
 
 def assert_metamodel(name,attrs,refs)
 	assert Js.const_defined?(name), "Metaclass '#{name}' not found"
