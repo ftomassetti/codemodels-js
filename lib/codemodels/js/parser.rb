@@ -200,7 +200,8 @@ class << ExpressionParser
 	end
 
 	def parse_artifact(artifact)
-		code = "a=#{artifact.code};".encode(internal_encoding)
+		enc = @internal_encoding || 'UTF-8'
+		code = "a=#{artifact.code};".encode(enc)
 		java_import 'java.io.StringReader'
 		java_import 'org.mozilla.javascript.CompilerEnvirons'
 		rhino_parser = (java_import 'org.mozilla.javascript.Parser')[0]
