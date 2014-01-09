@@ -4,6 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'codemodels/js/version'
 
 Gem::Specification.new do |spec|
+  spec.platform      = 'java'
   spec.name          = "codemodels-js"
   spec.version       = CodeModels::Js::VERSION
   spec.authors       = ["Federico Tomassetti"]
